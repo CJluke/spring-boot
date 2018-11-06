@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.boot.env;
 
 import org.junit.Test;
 
-import org.springframework.boot.json.JsonParseException;
 import org.springframework.boot.origin.PropertySourceOrigin;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertySource;
@@ -26,7 +25,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Tests for {@link SpringApplicationJsonEnvironmentPostProcessor}.
@@ -34,7 +32,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Dave Syer
  * @author Madhura Bhave
  * @author Phillip Webb
- * @author Artsiom Yudovin
  */
 public class SpringApplicationJsonEnvironmentPostProcessorTests {
 
@@ -47,9 +44,8 @@ public class SpringApplicationJsonEnvironmentPostProcessorTests {
 		assertThat(this.environment.resolvePlaceholders("${foo:}")).isEmpty();
 		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(this.environment,
 				"spring.application.json=foo:bar");
-		assertThatExceptionOfType(JsonParseException.class).isThrownBy(
-				() -> this.processor.postProcessEnvironment(this.environment, null))
-				.withMessageContaining("Cannot parse JSON");
+		this.processor.postProcessEnvironment(this.environment, null);
+		assertThat(this.environment.resolvePlaceholders("${foo:}")).isEmpty();
 	}
 
 	@Test
@@ -139,5 +135,4 @@ public class SpringApplicationJsonEnvironmentPostProcessorTests {
 		assertThat(origin.getPropertyName()).isEqualTo("spring.application.json");
 		assertThat(this.environment.resolvePlaceholders("${foo:}")).isEqualTo("bar");
 	}
-
 }

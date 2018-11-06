@@ -16,7 +16,8 @@
 
 package org.springframework.boot.actuate.autoconfigure.endpoint.jmx;
 
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
 
 import javax.management.MBeanServer;
 
@@ -43,8 +44,6 @@ import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.util.ObjectUtils;
 
 /**
@@ -55,7 +54,6 @@ import org.springframework.util.ObjectUtils;
  * @author Phillip Webb
  * @since 2.0.0
  */
-@Configuration
 @AutoConfigureAfter(JmxAutoConfiguration.class)
 @EnableConfigurationProperties(JmxEndpointProperties.class)
 public class JmxEndpointAutoConfiguration {
@@ -74,21 +72,21 @@ public class JmxEndpointAutoConfiguration {
 	@ConditionalOnMissingBean(JmxEndpointsSupplier.class)
 	public JmxEndpointDiscoverer jmxAnnotationEndpointDiscoverer(
 			ParameterValueMapper parameterValueMapper,
-			ObjectProvider<OperationInvokerAdvisor> invokerAdvisors,
-			ObjectProvider<EndpointFilter<ExposableJmxEndpoint>> filters) {
+			ObjectProvider<Collection<OperationInvokerAdvisor>> invokerAdvisors,
+			ObjectProvider<Collection<EndpointFilter<ExposableJmxEndpoint>>> filters) {
 		return new JmxEndpointDiscoverer(this.applicationContext, parameterValueMapper,
-				invokerAdvisors.orderedStream().collect(Collectors.toList()),
-				filters.orderedStream().collect(Collectors.toList()));
+				invokerAdvisors.getIfAvailable(Collections::emptyList),
+				filters.getIfAvailable(Collections::emptyList));
 	}
 
 	@Bean
 	@ConditionalOnSingleCandidate(MBeanServer.class)
 	public JmxEndpointExporter jmxMBeanExporter(MBeanServer mBeanServer,
-			Environment environment, ObjectProvider<ObjectMapper> objectMapper,
+			ObjectProvider<ObjectMapper> objectMapper,
 			JmxEndpointsSupplier jmxEndpointsSupplier) {
 		String contextId = ObjectUtils.getIdentityHexString(this.applicationContext);
 		EndpointObjectNameFactory objectNameFactory = new DefaultEndpointObjectNameFactory(
-				this.properties, environment, mBeanServer, contextId);
+				this.properties, mBeanServer, contextId);
 		JmxOperationResponseMapper responseMapper = new JacksonJmxOperationResponseMapper(
 				objectMapper.getIfAvailable());
 		return new JmxEndpointExporter(mBeanServer, objectNameFactory, responseMapper,

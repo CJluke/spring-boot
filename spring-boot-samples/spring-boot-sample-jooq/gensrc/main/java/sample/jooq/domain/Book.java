@@ -140,5 +140,4 @@ public class Book extends TableImpl<Record> {
 	public Book rename(String name) {
 		return new Book(name, null);
 	}
-
 }

@@ -70,18 +70,11 @@ class BindFailureAnalyzer extends AbstractFailureAnalyzer<BindException> {
 	}
 
 	private String getMessage(BindException cause) {
-		ConversionFailedException conversionFailure = findCause(cause,
-				ConversionFailedException.class);
-		if (conversionFailure != null) {
-			return "failed to convert " + conversionFailure.getSourceType() + " to "
-					+ conversionFailure.getTargetType();
+		if (cause.getCause() != null
+				&& StringUtils.hasText(cause.getCause().getMessage())) {
+			return cause.getCause().getMessage();
 		}
-		Throwable failure = cause;
-		while (failure.getCause() != null) {
-			failure = failure.getCause();
-		}
-		return (StringUtils.hasText(failure.getMessage()) ? failure.getMessage()
-				: cause.getMessage());
+		return cause.getMessage();
 	}
 
 	private FailureAnalysis getFailureAnalysis(Object description, BindException cause) {

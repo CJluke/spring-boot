@@ -52,7 +52,7 @@ public class WebSocketReactiveAutoConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean(name = "websocketReactiveWebServerCustomizer")
-		public TomcatWebSocketReactiveWebServerCustomizer websocketReactiveWebServerCustomizer() {
+		public TomcatWebSocketReactiveWebServerCustomizer websocketContainerCustomizer() {
 			return new TomcatWebSocketReactiveWebServerCustomizer();
 		}
 

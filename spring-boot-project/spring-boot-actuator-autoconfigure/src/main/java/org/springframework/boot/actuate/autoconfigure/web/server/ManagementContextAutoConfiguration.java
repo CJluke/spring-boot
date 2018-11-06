@@ -16,9 +16,6 @@
 
 package org.springframework.boot.actuate.autoconfigure.web.server;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
 import org.springframework.boot.actuate.autoconfigure.web.ManagementContextFactory;
@@ -29,7 +26,6 @@ import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoCon
 import org.springframework.boot.context.event.ApplicationFailedEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.context.ConfigurableWebServerApplicationContext;
-import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -58,9 +54,6 @@ import org.springframework.util.Assert;
 @EnableConfigurationProperties({ WebEndpointProperties.class,
 		ManagementServerProperties.class })
 public class ManagementContextAutoConfiguration {
-
-	private static final Log logger = LogFactory
-			.getLog(ManagementContextAutoConfiguration.class);
 
 	@Configuration
 	@ConditionalOnManagementPort(ManagementPortType.SAME)
@@ -136,25 +129,16 @@ public class ManagementContextAutoConfiguration {
 
 		@Override
 		public void afterSingletonsInstantiated() {
-			if (this.applicationContext instanceof WebServerApplicationContext
-					&& ((WebServerApplicationContext) this.applicationContext)
-							.getWebServer() != null) {
-				ConfigurableWebServerApplicationContext managementContext = this.managementContextFactory
-						.createManagementContext(this.applicationContext,
-								EnableChildManagementContextConfiguration.class,
-								PropertyPlaceholderAutoConfiguration.class);
-				managementContext.setServerNamespace("management");
-				managementContext.setId(this.applicationContext.getId() + ":management");
-				setClassLoaderIfPossible(managementContext);
-				CloseManagementContextListener.addIfPossible(this.applicationContext,
-						managementContext);
-				managementContext.refresh();
-			}
-			else {
-				logger.warn("Could not start embedded management container on "
-						+ "different port (management endpoints are still available "
-						+ "through JMX)");
-			}
+			ConfigurableWebServerApplicationContext managementContext = this.managementContextFactory
+					.createManagementContext(this.applicationContext,
+							EnableChildManagementContextConfiguration.class,
+							PropertyPlaceholderAutoConfiguration.class);
+			managementContext.setServerNamespace("management");
+			managementContext.setId(this.applicationContext.getId() + ":management");
+			setClassLoaderIfPossible(managementContext);
+			CloseManagementContextListener.addIfPossible(this.applicationContext,
+					managementContext);
+			managementContext.refresh();
 		}
 
 		private void setClassLoaderIfPossible(ConfigurableApplicationContext child) {

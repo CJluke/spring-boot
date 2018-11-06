@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebConnection;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.WebResponse;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
@@ -32,7 +34,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.mock.env.MockEnvironment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -46,6 +47,9 @@ import static org.mockito.Mockito.verify;
 @SuppressWarnings("resource")
 public class LocalHostWebClientTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Captor
 	private ArgumentCaptor<WebRequest> requestCaptor;
 
@@ -55,9 +59,9 @@ public class LocalHostWebClientTests {
 
 	@Test
 	public void createWhenEnvironmentIsNullWillThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new LocalHostWebClient(null))
-				.withMessageContaining("Environment must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Environment must not be null");
+		new LocalHostWebClient(null);
 	}
 
 	@Test

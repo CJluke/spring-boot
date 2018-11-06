@@ -137,5 +137,4 @@ public class Author extends TableImpl<Record> {
 	public Author rename(String name) {
 		return new Author(name, null);
 	}
-
 }

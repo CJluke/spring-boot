@@ -18,7 +18,6 @@ package org.springframework.boot.docs.jdbc;
 
 import javax.sql.DataSource;
 
-import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -52,10 +51,9 @@ public class SimpleTwoDataSourcesExample {
 
 		@Bean
 		@Primary
-		@ConfigurationProperties("app.datasource.first.configuration")
-		public HikariDataSource firstDataSource() {
-			return firstDataSourceProperties().initializeDataSourceBuilder()
-					.type(HikariDataSource.class).build();
+		@ConfigurationProperties("app.datasource.first")
+		public DataSource firstDataSource() {
+			return firstDataSourceProperties().initializeDataSourceBuilder().build();
 		}
 
 		@Bean

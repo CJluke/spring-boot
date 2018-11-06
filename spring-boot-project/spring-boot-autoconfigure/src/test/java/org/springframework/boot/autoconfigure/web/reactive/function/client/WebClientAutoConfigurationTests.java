@@ -49,9 +49,7 @@ import static org.mockito.Mockito.verify;
 public class WebClientAutoConfigurationTests {
 
 	private ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-			.withConfiguration(
-					AutoConfigurations.of(ClientHttpConnectorAutoConfiguration.class,
-							WebClientAutoConfiguration.class));
+			.withConfiguration(AutoConfigurations.of(WebClientAutoConfiguration.class));
 
 	@Test
 	public void shouldCreateBuilder() {
@@ -60,6 +58,7 @@ public class WebClientAutoConfigurationTests {
 			WebClient webClient = builder.build();
 			assertThat(webClient).isNotNull();
 		});
+
 	}
 
 	@Test
@@ -83,7 +82,7 @@ public class WebClientAutoConfigurationTests {
 				.run((context) -> {
 					WebClient.Builder builder = context.getBean(WebClient.Builder.class);
 					WebClientCustomizer customizer = context
-							.getBean("webClientCustomizer", WebClientCustomizer.class);
+							.getBean(WebClientCustomizer.class);
 					builder.build();
 					verify(customizer).customize(any(WebClient.Builder.class));
 				});
@@ -116,7 +115,7 @@ public class WebClientAutoConfigurationTests {
 					verify(secondConnector).connect(eq(HttpMethod.GET),
 							eq(URI.create("http://second.example.org/foo")), any());
 					WebClientCustomizer customizer = context
-							.getBean("webClientCustomizer", WebClientCustomizer.class);
+							.getBean(WebClientCustomizer.class);
 					verify(customizer, times(1)).customize(any(WebClient.Builder.class));
 				});
 	}

@@ -1,9 +1,11 @@
-plugins {
-	id 'org.springframework.boot' version '{version}' apply false
-	id 'java'
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
 }
 
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'java'
 
 repositories {
 	mavenLocal()

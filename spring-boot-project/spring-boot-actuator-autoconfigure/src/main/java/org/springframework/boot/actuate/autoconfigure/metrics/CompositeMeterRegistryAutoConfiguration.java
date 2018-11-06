@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -30,7 +29,6 @@ import org.springframework.context.annotation.Import;
  * @author Andy Wilkinson
  * @since 2.0.0
  */
-@Configuration
 @Import({ NoOpMeterRegistryConfiguration.class,
 		CompositeMeterRegistryConfiguration.class })
 @ConditionalOnClass(CompositeMeterRegistry.class)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class WebSocketServletAutoConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean(name = "websocketServletWebServerCustomizer")
-		public TomcatWebSocketServletWebServerCustomizer websocketServletWebServerCustomizer() {
+		public TomcatWebSocketServletWebServerCustomizer websocketContainerCustomizer() {
 			return new TomcatWebSocketServletWebServerCustomizer();
 		}
 
@@ -75,7 +75,7 @@ public class WebSocketServletAutoConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean(name = "websocketServletWebServerCustomizer")
-		public JettyWebSocketServletWebServerCustomizer websocketServletWebServerCustomizer() {
+		public JettyWebSocketServletWebServerCustomizer websocketContainerCustomizer() {
 			return new JettyWebSocketServletWebServerCustomizer();
 		}
 
@@ -87,7 +87,7 @@ public class WebSocketServletAutoConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean(name = "websocketServletWebServerCustomizer")
-		public UndertowWebSocketServletWebServerCustomizer websocketServletWebServerCustomizer() {
+		public UndertowWebSocketServletWebServerCustomizer websocketContainerCustomizer() {
 			return new UndertowWebSocketServletWebServerCustomizer();
 		}
 

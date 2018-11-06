@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class LoggersEndpoint {
 		Assert.notNull(name, "Name must not be null");
 		LoggerConfiguration configuration = this.loggingSystem
 				.getLoggerConfiguration(name);
-		return (configuration != null) ? new LoggerLevels(configuration) : null;
+		return (configuration == null ? null : new LoggerLevels(configuration));
 	}
 
 	@WriteOperation
@@ -112,7 +112,7 @@ public class LoggersEndpoint {
 		}
 
 		private String getName(LogLevel level) {
-			return (level != null) ? level.name() : null;
+			return (level == null ? null : level.name());
 		}
 
 		public String getConfiguredLevel() {

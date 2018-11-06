@@ -21,8 +21,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.autoconfigure.http.HttpProperties;
-import org.springframework.boot.autoconfigure.http.HttpProperties.Encoding.Type;
+import org.springframework.boot.autoconfigure.http.HttpEncodingProperties;
+import org.springframework.boot.autoconfigure.http.HttpEncodingProperties.Type;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.filter.OrderedCharacterEncodingFilter;
@@ -41,16 +41,16 @@ import org.springframework.web.filter.CharacterEncodingFilter;
  * @since 1.2.0
  */
 @Configuration
-@EnableConfigurationProperties(HttpProperties.class)
+@EnableConfigurationProperties(HttpEncodingProperties.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(CharacterEncodingFilter.class)
 @ConditionalOnProperty(prefix = "spring.http.encoding", value = "enabled", matchIfMissing = true)
 public class HttpEncodingAutoConfiguration {
 
-	private final HttpProperties.Encoding properties;
+	private final HttpEncodingProperties properties;
 
-	public HttpEncodingAutoConfiguration(HttpProperties properties) {
-		this.properties = properties.getEncoding();
+	public HttpEncodingAutoConfiguration(HttpEncodingProperties properties) {
+		this.properties = properties;
 	}
 
 	@Bean
@@ -71,9 +71,9 @@ public class HttpEncodingAutoConfiguration {
 	private static class LocaleCharsetMappingsCustomizer implements
 			WebServerFactoryCustomizer<ConfigurableServletWebServerFactory>, Ordered {
 
-		private final HttpProperties.Encoding properties;
+		private final HttpEncodingProperties properties;
 
-		LocaleCharsetMappingsCustomizer(HttpProperties.Encoding properties) {
+		LocaleCharsetMappingsCustomizer(HttpEncodingProperties properties) {
 			this.properties = properties;
 		}
 

@@ -39,6 +39,7 @@ public interface BootArchive extends Task {
 	 * @return the main class name
 	 */
 	@Input
+	@Optional
 	String getMainClassName();
 
 	/**

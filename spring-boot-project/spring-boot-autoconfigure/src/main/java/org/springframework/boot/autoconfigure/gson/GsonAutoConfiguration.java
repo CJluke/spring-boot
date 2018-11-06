@@ -62,7 +62,7 @@ public class GsonAutoConfiguration {
 		return new StandardGsonBuilderCustomizer(gsonProperties);
 	}
 
-	static final class StandardGsonBuilderCustomizer
+	private static final class StandardGsonBuilderCustomizer
 			implements GsonBuilderCustomizer, Ordered {
 
 		private final GsonProperties properties;

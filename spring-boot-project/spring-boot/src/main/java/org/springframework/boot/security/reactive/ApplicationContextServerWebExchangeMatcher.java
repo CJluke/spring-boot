@@ -32,7 +32,7 @@ import org.springframework.web.server.ServerWebExchange;
  * {@link AutowireCapableBeanFactory#createBean(Class, int, boolean) create a new bean}
  * that is autowired in the usual way.
  *
- * @param <C> the type of the context that the match method actually needs to use. Can be
+ * @param <C> The type of the context that the match method actually needs to use. Can be
  * an {@link ApplicationContext} or a class of an {@link ApplicationContext#getBean(Class)
  * existing bean}.
  * @author Madhura Bhave
@@ -70,9 +70,8 @@ public abstract class ApplicationContextServerWebExchangeMatcher<C>
 		if (this.context == null) {
 			synchronized (this.contextLock) {
 				if (this.context == null) {
-					Supplier<C> createdContext = createContext(exchange);
-					initialized(createdContext);
-					this.context = createdContext;
+					this.context = createContext(exchange);
+					initialized(this.context);
 				}
 			}
 		}
@@ -89,8 +88,7 @@ public abstract class ApplicationContextServerWebExchangeMatcher<C>
 	@SuppressWarnings("unchecked")
 	private Supplier<C> createContext(ServerWebExchange exchange) {
 		ApplicationContext context = exchange.getApplicationContext();
-		Assert.state(context != null,
-				"No ApplicationContext found on ServerWebExchange.");
+		Assert.state(context != null, "No WebApplicationContext found.");
 		if (this.contextClass.isInstance(context)) {
 			return () -> (C) context;
 		}

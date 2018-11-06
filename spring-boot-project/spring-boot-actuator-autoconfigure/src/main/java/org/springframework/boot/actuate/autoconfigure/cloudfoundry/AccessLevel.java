@@ -40,19 +40,19 @@ public enum AccessLevel {
 
 	public static final String REQUEST_ATTRIBUTE = "cloudFoundryAccessLevel";
 
-	private final List<String> ids;
+	private final List<String> endpointIds;
 
-	AccessLevel(String... ids) {
-		this.ids = Arrays.asList(ids);
+	AccessLevel(String... endpointIds) {
+		this.endpointIds = Arrays.asList(endpointIds);
 	}
 
 	/**
-	 * Returns if the access level should allow access to the specified ID.
-	 * @param id the ID to check
+	 * Returns if the access level should allow access to the specified endpoint path.
+	 * @param endpointId the endpoint ID to check
 	 * @return {@code true} if access is allowed
 	 */
-	public boolean isAccessAllowed(String id) {
-		return this.ids.isEmpty() || this.ids.contains(id);
+	public boolean isAccessAllowed(String endpointId) {
+		return this.endpointIds.isEmpty() || this.endpointIds.contains(endpointId);
 	}
 
 }

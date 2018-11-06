@@ -74,6 +74,11 @@ public final class ClasspathLoggingApplicationListener
 				|| ApplicationFailedEvent.class.isAssignableFrom(type);
 	}
 
+	@Override
+	public boolean supportsSourceType(Class<?> sourceType) {
+		return true;
+	}
+
 	private String getClasspath() {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (classLoader instanceof URLClassLoader) {

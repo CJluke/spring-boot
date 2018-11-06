@@ -23,8 +23,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.WebApplicationType;
@@ -38,7 +36,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.test.context.BootstrapWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextLoader;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.context.WebApplicationContext;
 
 /**
@@ -75,7 +72,6 @@ import org.springframework.web.context.WebApplicationContext;
 @Documented
 @Inherited
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
-@ExtendWith(SpringExtension.class)
 public @interface SpringBootTest {
 
 	/**

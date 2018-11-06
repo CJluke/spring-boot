@@ -128,5 +128,4 @@ public class BookToBookStore extends TableImpl<Record> {
 	public BookToBookStore rename(String name) {
 		return new BookToBookStore(name, null);
 	}
-
 }

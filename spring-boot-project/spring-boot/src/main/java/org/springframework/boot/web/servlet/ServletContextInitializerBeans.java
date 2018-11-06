@@ -18,7 +18,6 @@ package org.springframework.boot.web.servlet;
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventListener;
@@ -29,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.Filter;
 import javax.servlet.MultipartConfigElement;
@@ -74,34 +72,25 @@ public class ServletContextInitializerBeans
 
 	private final MultiValueMap<Class<?>, ServletContextInitializer> initializers;
 
-	private final List<Class<? extends ServletContextInitializer>> initializerTypes;
-
 	private List<ServletContextInitializer> sortedList;
 
-	@SafeVarargs
-	public ServletContextInitializerBeans(ListableBeanFactory beanFactory,
-			Class<? extends ServletContextInitializer>... initializerTypes) {
+	public ServletContextInitializerBeans(ListableBeanFactory beanFactory) {
 		this.initializers = new LinkedMultiValueMap<>();
-		this.initializerTypes = (initializerTypes.length != 0)
-				? Arrays.asList(initializerTypes)
-				: Collections.singletonList(ServletContextInitializer.class);
 		addServletContextInitializerBeans(beanFactory);
 		addAdaptableBeans(beanFactory);
-		List<ServletContextInitializer> sortedInitializers = this.initializers.values()
-				.stream()
-				.flatMap((value) -> value.stream()
-						.sorted(AnnotationAwareOrderComparator.INSTANCE))
-				.collect(Collectors.toList());
+		List<ServletContextInitializer> sortedInitializers = new ArrayList<>();
+		this.initializers.values().forEach((contextInitializers) -> {
+			AnnotationAwareOrderComparator.sort(contextInitializers);
+			sortedInitializers.addAll(contextInitializers);
+		});
 		this.sortedList = Collections.unmodifiableList(sortedInitializers);
 	}
 
 	private void addServletContextInitializerBeans(ListableBeanFactory beanFactory) {
-		for (Class<? extends ServletContextInitializer> initializerType : this.initializerTypes) {
-			for (Entry<String, ? extends ServletContextInitializer> initializerBean : getOrderedBeansOfType(
-					beanFactory, initializerType)) {
-				addServletContextInitializerBean(initializerBean.getKey(),
-						initializerBean.getValue(), beanFactory);
-			}
+		for (Entry<String, ServletContextInitializer> initializerBean : getOrderedBeansOfType(
+				beanFactory, ServletContextInitializer.class)) {
+			addServletContextInitializerBean(initializerBean.getKey(),
+					initializerBean.getValue(), beanFactory);
 		}
 	}
 
@@ -162,7 +151,7 @@ public class ServletContextInitializerBeans
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void addAdaptableBeans(ListableBeanFactory beanFactory) {
+	private void addAdaptableBeans(ListableBeanFactory beanFactory) {
 		MultipartConfigElement multipartConfig = getMultipartConfig(beanFactory);
 		addAsRegistrationBean(beanFactory, Servlet.class,
 				new ServletRegistrationBeanAdapter(multipartConfig));
@@ -179,11 +168,11 @@ public class ServletContextInitializerBeans
 	private MultipartConfigElement getMultipartConfig(ListableBeanFactory beanFactory) {
 		List<Entry<String, MultipartConfigElement>> beans = getOrderedBeansOfType(
 				beanFactory, MultipartConfigElement.class);
-		return beans.isEmpty() ? null : beans.get(0).getValue();
+		return (beans.isEmpty() ? null : beans.get(0).getValue());
 	}
 
-	protected <T> void addAsRegistrationBean(ListableBeanFactory beanFactory,
-			Class<T> type, RegistrationBeanAdapter<T> adapter) {
+	private <T> void addAsRegistrationBean(ListableBeanFactory beanFactory, Class<T> type,
+			RegistrationBeanAdapter<T> adapter) {
 		addAsRegistrationBean(beanFactory, type, type, adapter);
 	}
 
@@ -258,11 +247,8 @@ public class ServletContextInitializerBeans
 	/**
 	 * Adapter to convert a given Bean type into a {@link RegistrationBean} (and hence a
 	 * {@link ServletContextInitializer}).
-	 *
-	 * @param <T> the type of the Bean to adapt
 	 */
-	@FunctionalInterface
-	protected interface RegistrationBeanAdapter<T> {
+	private interface RegistrationBeanAdapter<T> {
 
 		RegistrationBean createRegistrationBean(String name, T source,
 				int totalNumberOfSourceBeans);
@@ -284,7 +270,7 @@ public class ServletContextInitializerBeans
 		@Override
 		public RegistrationBean createRegistrationBean(String name, Servlet source,
 				int totalNumberOfSourceBeans) {
-			String url = (totalNumberOfSourceBeans != 1) ? "/" + name + "/" : "/";
+			String url = (totalNumberOfSourceBeans == 1 ? "/" : "/" + name + "/");
 			if (name.equals(DISPATCHER_SERVLET_NAME)) {
 				url = "/"; // always map the main dispatcherServlet to "/"
 			}

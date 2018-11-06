@@ -107,7 +107,7 @@ public class JettyWebServer implements WebServer {
 				this.server.start();
 				this.server.setStopAtShutdown(false);
 			}
-			catch (Throwable ex) {
+			catch (Exception ex) {
 				// Ensure process isn't left running
 				stopSilently();
 				throw new WebServerException("Unable to start embedded Jetty web server",
@@ -154,8 +154,9 @@ public class JettyWebServer implements WebServer {
 					}
 				}
 				this.started = true;
-				logger.info("Jetty started on port(s) " + getActualPortsDescription()
-						+ " with context path '" + getContextPath() + "'");
+				JettyWebServer.logger
+						.info("Jetty started on port(s) " + getActualPortsDescription()
+								+ " with context path '" + getContextPath() + "'");
 			}
 			catch (WebServerException ex) {
 				stopSilently();
@@ -171,10 +172,8 @@ public class JettyWebServer implements WebServer {
 	private String getActualPortsDescription() {
 		StringBuilder ports = new StringBuilder();
 		for (Connector connector : this.server.getConnectors()) {
-			if (ports.length() != 0) {
-				ports.append(", ");
-			}
-			ports.append(getLocalPort(connector)).append(getProtocols(connector));
+			ports.append(ports.length() == 0 ? "" : ", ");
+			ports.append(getLocalPort(connector) + getProtocols(connector));
 		}
 		return ports.toString();
 	}
@@ -187,7 +186,8 @@ public class JettyWebServer implements WebServer {
 					connector);
 		}
 		catch (Exception ex) {
-			logger.info("could not determine port ( " + ex.getMessage() + ")");
+			JettyWebServer.logger
+					.info("could not determine port ( " + ex.getMessage() + ")");
 			return 0;
 		}
 	}

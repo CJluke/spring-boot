@@ -16,13 +16,15 @@
 
 package org.springframework.boot.actuate.couchbase;
 
-import com.couchbase.client.core.message.internal.DiagnosticsReport;
-import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.bucket.BucketInfo;
+import com.couchbase.client.java.cluster.ClusterInfo;
 
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.data.couchbase.core.CouchbaseOperations;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * {@link HealthIndicator} for Couchbase.
@@ -33,23 +35,26 @@ import org.springframework.util.Assert;
  */
 public class CouchbaseHealthIndicator extends AbstractHealthIndicator {
 
-	private final Cluster cluster;
+	private CouchbaseOperations operations;
 
-	/**
-	 * Create an indicator with the specified {@link Cluster}.
-	 * @param cluster the Couchbase Cluster
-	 * @since 2.0.6
-	 */
-	public CouchbaseHealthIndicator(Cluster cluster) {
+	public CouchbaseHealthIndicator() {
 		super("Couchbase health check failed");
-		Assert.notNull(cluster, "Cluster must not be null");
-		this.cluster = cluster;
+	}
+
+	public CouchbaseHealthIndicator(CouchbaseOperations couchbaseOperations) {
+		super("Couchbase health check failed");
+		Assert.notNull(couchbaseOperations, "CouchbaseOperations must not be null");
+		this.operations = couchbaseOperations;
 	}
 
 	@Override
 	protected void doHealthCheck(Health.Builder builder) throws Exception {
-		DiagnosticsReport diagnostics = this.cluster.diagnostics();
-		new CouchbaseHealth(diagnostics).applyTo(builder);
+		ClusterInfo cluster = this.operations.getCouchbaseClusterInfo();
+		BucketInfo bucket = this.operations.getCouchbaseBucket().bucketManager().info();
+		String versions = StringUtils
+				.collectionToCommaDelimitedString(cluster.getAllVersions());
+		String nodes = StringUtils.collectionToCommaDelimitedString(bucket.nodeList());
+		builder.up().withDetail("versions", versions).withDetail("nodes", nodes);
 	}
 
 }

@@ -18,7 +18,6 @@ package org.springframework.boot.actuate.endpoint.web.annotation;
 
 import java.util.Collection;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.annotation.AbstractDiscoveredEndpoint;
 import org.springframework.boot.actuate.endpoint.annotation.EndpointDiscoverer;
 import org.springframework.boot.actuate.endpoint.web.ExposableWebEndpoint;
@@ -35,7 +34,7 @@ class DiscoveredWebEndpoint extends AbstractDiscoveredEndpoint<WebOperation>
 	private final String rootPath;
 
 	DiscoveredWebEndpoint(EndpointDiscoverer<?, ?> discoverer, Object endpointBean,
-			EndpointId id, String rootPath, boolean enabledByDefault,
+			String id, String rootPath, boolean enabledByDefault,
 			Collection<WebOperation> operations) {
 		super(discoverer, endpointBean, id, enabledByDefault, operations);
 		this.rootPath = rootPath;
@@ -45,5 +44,4 @@ class DiscoveredWebEndpoint extends AbstractDiscoveredEndpoint<WebOperation>
 	public String getRootPath() {
 		return this.rootPath;
 	}
-
 }

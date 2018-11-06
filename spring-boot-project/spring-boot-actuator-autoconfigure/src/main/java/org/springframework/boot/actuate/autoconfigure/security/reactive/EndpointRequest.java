@@ -31,11 +31,10 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.web.PathMappedEndpoints;
 import org.springframework.boot.security.reactive.ApplicationContextServerWebExchangeMatcher;
-import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
@@ -126,7 +125,7 @@ public final class EndpointRequest {
 
 		private final boolean includeLinks;
 
-		private volatile ServerWebExchangeMatcher delegate;
+		private ServerWebExchangeMatcher delegate;
 
 		private EndpointServerWebExchangeMatcher(boolean includeLinks) {
 			this(Collections.emptyList(), Collections.emptyList(), includeLinks);
@@ -209,12 +208,9 @@ public final class EndpointRequest {
 					.map(pathMappedEndpoints::getPath);
 		}
 
-		private EndpointId getEndpointId(Object source) {
-			if (source instanceof EndpointId) {
-				return (EndpointId) source;
-			}
+		private String getEndpointId(Object source) {
 			if (source instanceof String) {
-				return (EndpointId.of((String) source));
+				return (String) source;
 			}
 			if (source instanceof Class) {
 				return getEndpointId((Class<?>) source);
@@ -222,12 +218,11 @@ public final class EndpointRequest {
 			throw new IllegalStateException("Unsupported source " + source);
 		}
 
-		private EndpointId getEndpointId(Class<?> source) {
-			Endpoint annotation = AnnotatedElementUtils.getMergedAnnotation(source,
-					Endpoint.class);
+		private String getEndpointId(Class<?> source) {
+			Endpoint annotation = AnnotationUtils.findAnnotation(source, Endpoint.class);
 			Assert.state(annotation != null,
 					() -> "Class " + source + " is not annotated with @Endpoint");
-			return EndpointId.of(annotation.id());
+			return annotation.id();
 		}
 
 		private List<ServerWebExchangeMatcher> getDelegateMatchers(Set<String> paths) {
@@ -245,12 +240,12 @@ public final class EndpointRequest {
 	}
 
 	/**
-	 * The {@link ServerWebExchangeMatcher} used to match against the links endpoint.
+	 * The The {@link ServerWebExchangeMatcher} used to match against the links endpoint.
 	 */
 	public static final class LinksServerWebExchangeMatcher
 			extends ApplicationContextServerWebExchangeMatcher<WebEndpointProperties> {
 
-		private volatile ServerWebExchangeMatcher delegate;
+		private ServerWebExchangeMatcher delegate;
 
 		private LinksServerWebExchangeMatcher() {
 			super(WebEndpointProperties.class);

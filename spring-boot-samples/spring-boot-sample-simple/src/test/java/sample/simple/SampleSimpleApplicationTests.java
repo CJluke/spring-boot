@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,9 @@ public class SampleSimpleApplicationTests {
 
 	@Test
 	public void testCommandLineOverrides() throws Exception {
-		SampleSimpleApplication.main(new String[] { "--name=Gordon", "--duration=1m" });
+		SampleSimpleApplication.main(new String[] { "--name=Gordon" });
 		String output = this.outputCapture.toString();
-		assertThat(output).contains("Hello Gordon for 60 seconds");
+		assertThat(output).contains("Hello Gordon");
 	}
 
 }

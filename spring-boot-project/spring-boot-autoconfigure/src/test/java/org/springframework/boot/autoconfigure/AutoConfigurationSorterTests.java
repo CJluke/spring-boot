@@ -24,7 +24,9 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
@@ -34,7 +36,6 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -72,6 +73,9 @@ public class AutoConfigurationSorterTests {
 	private static final String A2 = AutoConfigureA2.class.getName();
 
 	private static final String W2 = AutoConfigureW2.class.getName();
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private AutoConfigurationSorter sorter;
 
@@ -140,10 +144,9 @@ public class AutoConfigurationSorterTests {
 	public void byAutoConfigureAfterWithCycle() {
 		this.sorter = new AutoConfigurationSorter(new CachingMetadataReaderFactory(),
 				this.autoConfigurationMetadata);
-		assertThatIllegalStateException()
-				.isThrownBy(
-						() -> this.sorter.getInPriorityOrder(Arrays.asList(A, B, C, D)))
-				.withMessageContaining("AutoConfigure cycle detected");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("AutoConfigure cycle detected");
+		this.sorter.getInPriorityOrder(Arrays.asList(A, B, C, D));
 	}
 
 	@Test
@@ -173,9 +176,9 @@ public class AutoConfigurationSorterTests {
 		this.autoConfigurationMetadata = getAutoConfigurationMetadata(A, B, D);
 		this.sorter = new AutoConfigurationSorter(readerFactory,
 				this.autoConfigurationMetadata);
-		assertThatIllegalStateException()
-				.isThrownBy(() -> this.sorter.getInPriorityOrder(Arrays.asList(D, B)))
-				.withMessageContaining("AutoConfigure cycle detected");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("AutoConfigure cycle detected");
+		this.sorter.getInPriorityOrder(Arrays.asList(D, B));
 	}
 
 	private AutoConfigurationMetadata getAutoConfigurationMetadata(String... classNames)

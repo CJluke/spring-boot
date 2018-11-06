@@ -32,6 +32,7 @@ import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
 import org.springframework.boot.actuate.endpoint.web.ExposableWebEndpoint;
+import org.springframework.boot.actuate.endpoint.web.PathMapper;
 import org.springframework.boot.actuate.endpoint.web.annotation.ControllerEndpointsSupplier;
 import org.springframework.boot.actuate.endpoint.web.annotation.ServletEndpointsSupplier;
 import org.springframework.boot.actuate.health.HealthEndpoint;
@@ -98,8 +99,9 @@ public class CloudFoundryActuatorAutoConfiguration {
 			ServletEndpointsSupplier servletEndpointsSupplier,
 			ControllerEndpointsSupplier controllerEndpointsSupplier) {
 		CloudFoundryWebEndpointDiscoverer discoverer = new CloudFoundryWebEndpointDiscoverer(
-				this.applicationContext, parameterMapper, endpointMediaTypes, null,
-				Collections.emptyList(), Collections.emptyList());
+				this.applicationContext, parameterMapper, endpointMediaTypes,
+				PathMapper.useEndpointId(), Collections.emptyList(),
+				Collections.emptyList());
 		CloudFoundrySecurityInterceptor securityInterceptor = getSecurityInterceptor(
 				restTemplateBuilder, this.applicationContext.getEnvironment());
 		Collection<ExposableWebEndpoint> webEndpoints = discoverer.getEndpoints();
@@ -128,8 +130,8 @@ public class CloudFoundryActuatorAutoConfiguration {
 		String cloudControllerUrl = environment.getProperty("vcap.application.cf_api");
 		boolean skipSslValidation = environment.getProperty(
 				"management.cloudfoundry.skip-ssl-validation", Boolean.class, false);
-		return (cloudControllerUrl != null) ? new CloudFoundrySecurityService(
-				restTemplateBuilder, cloudControllerUrl, skipSslValidation) : null;
+		return (cloudControllerUrl == null ? null : new CloudFoundrySecurityService(
+				restTemplateBuilder, cloudControllerUrl, skipSslValidation));
 	}
 
 	private CorsConfiguration getCorsConfiguration() {

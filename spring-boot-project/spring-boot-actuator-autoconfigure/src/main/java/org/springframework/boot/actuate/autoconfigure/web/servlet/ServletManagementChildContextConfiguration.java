@@ -59,6 +59,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
  * @author Eddú Meléndez
  * @author Phillip Webb
  */
+@Configuration
 @ManagementContextConfiguration(ManagementContextType.CHILD)
 @ConditionalOnWebApplication(type = Type.SERVLET)
 class ServletManagementChildContextConfiguration {
@@ -70,7 +71,6 @@ class ServletManagementChildContextConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnClass(name = "io.undertow.Undertow")
 	public UndertowAccessLogCustomizer undertowAccessLogCustomizer() {
 		return new UndertowAccessLogCustomizer();
 	}
@@ -84,7 +84,7 @@ class ServletManagementChildContextConfiguration {
 	@Configuration
 	@ConditionalOnClass({ EnableWebSecurity.class, Filter.class })
 	@ConditionalOnBean(name = BeanIds.SPRING_SECURITY_FILTER_CHAIN, search = SearchStrategy.ANCESTORS)
-	static class ServletManagementContextSecurityConfiguration {
+	class ServletManagementContextSecurityConfiguration {
 
 		@Bean
 		public Filter springSecurityFilterChain(HierarchicalBeanFactory beanFactory) {

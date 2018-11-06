@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 
 import org.springframework.beans.BeansException;
@@ -41,7 +43,6 @@ import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.mock.env.MockEnvironment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Tests for {@link AutoConfigurationImportSelector}
@@ -59,6 +60,9 @@ public class AutoConfigurationImportSelectorTests {
 	private final MockEnvironment environment = new MockEnvironment();
 
 	private List<AutoConfigurationImportFilter> filters = new ArrayList<>();
+
+	@Rule
+	public ExpectedException expected = ExpectedException.none();
 
 	@Before
 	public void setup() {
@@ -169,14 +173,14 @@ public class AutoConfigurationImportSelectorTests {
 
 	@Test
 	public void nonAutoConfigurationClassExclusionsShouldThrowException() {
-		assertThatIllegalStateException().isThrownBy(
-				() -> selectImports(EnableAutoConfigurationWithFaultyClassExclude.class));
+		this.expected.expect(IllegalStateException.class);
+		selectImports(EnableAutoConfigurationWithFaultyClassExclude.class);
 	}
 
 	@Test
 	public void nonAutoConfigurationClassNameExclusionsWhenPresentOnClassPathShouldThrowException() {
-		assertThatIllegalStateException().isThrownBy(() -> selectImports(
-				EnableAutoConfigurationWithFaultyClassNameExclude.class));
+		this.expected.expect(IllegalStateException.class);
+		selectImports(EnableAutoConfigurationWithFaultyClassNameExclude.class);
 	}
 
 	@Test
@@ -184,8 +188,8 @@ public class AutoConfigurationImportSelectorTests {
 		this.environment.setProperty("spring.autoconfigure.exclude",
 				"org.springframework.boot.autoconfigure."
 						+ "AutoConfigurationImportSelectorTests.TestConfiguration");
-		assertThatIllegalStateException()
-				.isThrownBy(() -> selectImports(BasicEnableAutoConfiguration.class));
+		this.expected.expect(IllegalStateException.class);
+		selectImports(BasicEnableAutoConfiguration.class);
 	}
 
 	@Test

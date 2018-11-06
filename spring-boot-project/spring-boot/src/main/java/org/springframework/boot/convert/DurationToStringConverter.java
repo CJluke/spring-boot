@@ -45,22 +45,14 @@ final class DurationToStringConverter implements GenericConverter {
 		if (source == null) {
 			return null;
 		}
-		return convert((Duration) source, getDurationStyle(sourceType),
-				getDurationUnit(sourceType));
-	}
-
-	private ChronoUnit getDurationUnit(TypeDescriptor sourceType) {
-		DurationUnit annotation = sourceType.getAnnotation(DurationUnit.class);
-		return (annotation != null) ? annotation.value() : null;
-	}
-
-	private DurationStyle getDurationStyle(TypeDescriptor sourceType) {
-		DurationFormat annotation = sourceType.getAnnotation(DurationFormat.class);
-		return (annotation != null) ? annotation.value() : null;
+		DurationFormat format = sourceType.getAnnotation(DurationFormat.class);
+		DurationUnit unit = sourceType.getAnnotation(DurationUnit.class);
+		return convert((Duration) source, (format == null ? null : format.value()),
+				(unit == null ? null : unit.value()));
 	}
 
 	private String convert(Duration source, DurationStyle style, ChronoUnit unit) {
-		style = (style != null) ? style : DurationStyle.ISO8601;
+		style = (style != null ? style : DurationStyle.ISO8601);
 		return style.print(source, unit);
 	}
 

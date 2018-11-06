@@ -60,6 +60,7 @@ public class ConfigurationPropertySourcesTests {
 	public void attachShouldReAttachInMergedSetup() {
 		ConfigurableEnvironment parent = new StandardEnvironment();
 		ConfigurationPropertySources.attach(parent);
+		parent.getProperty("my.example-property");
 		ConfigurableEnvironment child = new StandardEnvironment();
 		child.merge(parent);
 		child.getPropertySources().addLast(new MapPropertySource("config",

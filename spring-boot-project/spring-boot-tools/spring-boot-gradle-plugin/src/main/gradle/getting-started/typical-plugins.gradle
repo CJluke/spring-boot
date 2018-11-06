@@ -1,5 +1,7 @@
-plugins {
-	id 'org.springframework.boot' version '{version}'
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
 }
 
 // tag::apply[]

@@ -37,7 +37,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.neo4j.transaction.Neo4jTransactionManager;
 import org.springframework.data.neo4j.web.support.OpenSessionInViewInterceptor;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -60,7 +59,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 		PlatformTransactionManager.class })
 @ConditionalOnMissingBean(SessionFactory.class)
 @EnableConfigurationProperties(Neo4jProperties.class)
-@Import(Neo4jBookmarkManagementConfiguration.class)
 public class Neo4jDataAutoConfiguration {
 
 	@Bean
@@ -72,10 +70,15 @@ public class Neo4jDataAutoConfiguration {
 	@Bean
 	public SessionFactory sessionFactory(org.neo4j.ogm.config.Configuration configuration,
 			ApplicationContext applicationContext,
-			ObjectProvider<EventListener> eventListeners) {
+			ObjectProvider<List<EventListener>> eventListeners) {
 		SessionFactory sessionFactory = new SessionFactory(configuration,
 				getPackagesToScan(applicationContext));
-		eventListeners.stream().forEach(sessionFactory::register);
+		List<EventListener> providedEventListeners = eventListeners.getIfAvailable();
+		if (providedEventListeners != null) {
+			for (EventListener eventListener : providedEventListeners) {
+				sessionFactory.register(eventListener);
+			}
+		}
 		return sessionFactory;
 	}
 

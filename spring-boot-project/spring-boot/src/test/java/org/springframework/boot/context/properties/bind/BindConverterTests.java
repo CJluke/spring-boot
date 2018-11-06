@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -37,8 +39,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.GenericConversionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
@@ -50,6 +50,9 @@ import static org.mockito.Mockito.verify;
  */
 public class BindConverterTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Mock
 	private Consumer<PropertyEditorRegistry> propertyEditorInitializer;
 
@@ -60,19 +63,21 @@ public class BindConverterTests {
 
 	@Test
 	public void createWhenConversionServiceIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> BindConverter.get(null, null))
-				.withMessageContaining("ConversionService must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("ConversionService must not be null");
+		new BindConverter(null, null);
 	}
 
 	@Test
 	public void createWhenPropertyEditorInitializerIsNullShouldCreate() {
-		BindConverter.get(ApplicationConversionService.getSharedInstance(), null);
+		BindConverter bindConverter = new BindConverter(
+				ApplicationConversionService.getSharedInstance(), null);
+		assertThat(bindConverter).isNotNull();
 	}
 
 	@Test
 	public void createWhenPropertyEditorInitializerIsNotNullShouldUseToInitialize() {
-		BindConverter.get(ApplicationConversionService.getSharedInstance(),
+		new BindConverter(ApplicationConversionService.getSharedInstance(),
 				this.propertyEditorInitializer);
 		verify(this.propertyEditorInitializer).accept(any(PropertyEditorRegistry.class));
 	}
@@ -125,8 +130,8 @@ public class BindConverterTests {
 
 	@Test
 	public void canConvertWhenNotPropertyEditorAndConversionServiceCannotConvertShouldReturnFalse() {
-		BindConverter bindConverter = BindConverter
-				.get(ApplicationConversionService.getSharedInstance(), null);
+		BindConverter bindConverter = new BindConverter(
+				ApplicationConversionService.getSharedInstance(), null);
 		assertThat(bindConverter.canConvert("test",
 				ResolvableType.forClass(SampleType.class))).isFalse();
 	}
@@ -137,6 +142,7 @@ public class BindConverterTests {
 		Class<?> converted = bindConverter.convert("java.lang.RuntimeException",
 				ResolvableType.forClass(Class.class));
 		assertThat(converted).isEqualTo(RuntimeException.class);
+
 	}
 
 	@Test
@@ -162,7 +168,7 @@ public class BindConverterTests {
 				this::registerSampleTypeEditor);
 		List<SampleType> converted = bindConverter.convert("test",
 				ResolvableType.forClassWithGenerics(List.class, SampleType.class));
-		assertThat(converted).hasSize(1);
+		assertThat(converted).isNotEmpty();
 		assertThat(converted.get(0).getText()).isEqualTo("test");
 	}
 
@@ -186,18 +192,17 @@ public class BindConverterTests {
 
 	@Test
 	public void convertWhenNotPropertyEditorAndConversionServiceCannotConvertShouldThrowException() {
-		BindConverter bindConverter = BindConverter
-				.get(ApplicationConversionService.getSharedInstance(), null);
-		assertThatExceptionOfType(ConverterNotFoundException.class)
-				.isThrownBy(() -> bindConverter.convert("test",
-						ResolvableType.forClass(SampleType.class)));
+		BindConverter bindConverter = new BindConverter(
+				ApplicationConversionService.getSharedInstance(), null);
+		this.thrown.expect(ConverterNotFoundException.class);
+		bindConverter.convert("test", ResolvableType.forClass(SampleType.class));
 	}
 
 	@Test
 	public void convertWhenConvertingToFileShouldExcludeFileEditor() {
 		// For back compatibility we want true file conversion and not an accidental
 		// classpath resource reference. See gh-12163
-		BindConverter bindConverter = BindConverter.get(new GenericConversionService(),
+		BindConverter bindConverter = new BindConverter(new GenericConversionService(),
 				null);
 		File result = bindConverter.convert(".", ResolvableType.forClass(File.class));
 		assertThat(result.getPath()).isEqualTo(".");
@@ -205,7 +210,7 @@ public class BindConverterTests {
 
 	@Test
 	public void fallsBackToApplicationConversionService() {
-		BindConverter bindConverter = BindConverter.get(new GenericConversionService(),
+		BindConverter bindConverter = new BindConverter(new GenericConversionService(),
 				null);
 		Duration result = bindConverter.convert("10s",
 				ResolvableType.forClass(Duration.class));
@@ -214,14 +219,14 @@ public class BindConverterTests {
 
 	private BindConverter getPropertyEditorOnlyBindConverter(
 			Consumer<PropertyEditorRegistry> propertyEditorInitializer) {
-		return BindConverter.get(new ThrowingConversionService(),
+		return new BindConverter(new ThrowingConversionService(),
 				propertyEditorInitializer);
 	}
 
 	private BindConverter getBindConverter(Converter<?, ?> converter) {
 		GenericConversionService conversionService = new GenericConversionService();
 		conversionService.addConverter(converter);
-		return BindConverter.get(conversionService, null);
+		return new BindConverter(conversionService, null);
 	}
 
 	private void registerSampleTypeEditor(PropertyEditorRegistry registry) {

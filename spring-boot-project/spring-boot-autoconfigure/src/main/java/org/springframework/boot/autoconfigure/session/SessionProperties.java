@@ -17,17 +17,13 @@
 package org.springframework.boot.autoconfigure.session;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.web.servlet.DispatcherType;
 import org.springframework.boot.web.servlet.server.Session;
 import org.springframework.session.web.http.SessionRepositoryFilter;
@@ -49,24 +45,17 @@ public class SessionProperties {
 	private StoreType storeType;
 
 	/**
-	 * Session timeout. If a duration suffix is not specified, seconds will be used.
+	 * Session timeout.
 	 */
-	@DurationUnit(ChronoUnit.SECONDS)
-	private Duration timeout;
+	private final Duration timeout;
 
 	private Servlet servlet = new Servlet();
 
-	private final ServerProperties serverProperties;
-
 	public SessionProperties(ObjectProvider<ServerProperties> serverProperties) {
-		this.serverProperties = serverProperties.getIfUnique();
-	}
-
-	@PostConstruct
-	public void checkSessionTimeout() {
-		if (this.timeout == null && this.serverProperties != null) {
-			this.timeout = this.serverProperties.getServlet().getSession().getTimeout();
-		}
+		ServerProperties properties = serverProperties.getIfUnique();
+		Session session = (properties == null ? null
+				: properties.getServlet().getSession());
+		this.timeout = (session == null ? null : session.getTimeout());
 	}
 
 	public StoreType getStoreType() {
@@ -84,10 +73,6 @@ public class SessionProperties {
 	 */
 	public Duration getTimeout() {
 		return this.timeout;
-	}
-
-	public void setTimeout(Duration timeout) {
-		this.timeout = timeout;
 	}
 
 	public Servlet getServlet() {

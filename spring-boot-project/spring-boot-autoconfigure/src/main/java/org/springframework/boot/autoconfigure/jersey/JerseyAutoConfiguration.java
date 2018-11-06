@@ -18,6 +18,7 @@ package org.springframework.boot.autoconfigure.jersey;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.DispatcherType;
@@ -59,6 +60,7 @@ import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.ClassUtils;
@@ -92,15 +94,15 @@ public class JerseyAutoConfiguration implements ServletContextAware {
 
 	private final ResourceConfig config;
 
-	private final ObjectProvider<ResourceConfigCustomizer> customizers;
+	private final List<ResourceConfigCustomizer> customizers;
 
 	private String path;
 
 	public JerseyAutoConfiguration(JerseyProperties jersey, ResourceConfig config,
-			ObjectProvider<ResourceConfigCustomizer> customizers) {
+			ObjectProvider<List<ResourceConfigCustomizer>> customizers) {
 		this.jersey = jersey;
 		this.config = config;
-		this.customizers = customizers;
+		this.customizers = customizers.getIfAvailable();
 	}
 
 	@PostConstruct
@@ -114,14 +116,18 @@ public class JerseyAutoConfiguration implements ServletContextAware {
 			this.path = parseApplicationPath(this.jersey.getApplicationPath());
 		}
 		else {
-			this.path = findApplicationPath(AnnotationUtils.findAnnotation(
-					this.config.getApplication().getClass(), ApplicationPath.class));
+			this.path = findApplicationPath(AnnotationUtils
+					.findAnnotation(this.config.getClass(), ApplicationPath.class));
 		}
 	}
 
 	private void customize() {
-		this.customizers.orderedStream()
-				.forEach((customizer) -> customizer.customize(this.config));
+		if (this.customizers != null) {
+			AnnotationAwareOrderComparator.sort(this.customizers);
+			for (ResourceConfigCustomizer customizer : this.customizers) {
+				customizer.customize(this.config);
+			}
+		}
 	}
 
 	@Bean

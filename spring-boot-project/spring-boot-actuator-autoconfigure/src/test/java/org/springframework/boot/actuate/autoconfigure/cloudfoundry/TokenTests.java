@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package org.springframework.boot.actuate.autoconfigure.cloudfoundry;
 
-import java.util.function.Consumer;
-
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.actuate.autoconfigure.cloudfoundry.CloudFoundryAuthorizationException.Reason;
 import org.springframework.util.Base64Utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Tests for {@link Token}.
@@ -33,40 +32,43 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  */
 public class TokenTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void invalidJwtShouldThrowException() {
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> new Token("invalid-token"))
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		new Token("invalid-token");
 	}
 
 	@Test
 	public void invalidJwtClaimsShouldThrowException() {
 		String header = "{\"alg\": \"RS256\", \"kid\": \"key-id\", \"typ\": \"JWT\"}";
 		String claims = "invalid-claims";
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> new Token(Base64Utils.encodeToString(header.getBytes())
-						+ "." + Base64Utils.encodeToString(claims.getBytes())))
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		new Token(Base64Utils.encodeToString(header.getBytes()) + "."
+				+ Base64Utils.encodeToString(claims.getBytes()));
 	}
 
 	@Test
 	public void invalidJwtHeaderShouldThrowException() {
 		String header = "invalid-header";
 		String claims = "{\"exp\": 2147483647, \"iss\": \"http://localhost:8080/uaa/oauth/token\"}";
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> new Token(Base64Utils.encodeToString(header.getBytes())
-						+ "." + Base64Utils.encodeToString(claims.getBytes())))
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		new Token(Base64Utils.encodeToString(header.getBytes()) + "."
+				+ Base64Utils.encodeToString(claims.getBytes()));
 	}
 
 	@Test
 	public void emptyJwtSignatureShouldThrowException() {
 		String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0b3B0YWwu"
 				+ "Y29tIiwiZXhwIjoxNDI2NDIwODAwLCJhd2Vzb21lIjp0cnVlfQ.";
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> new Token(token))
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		new Token(token);
 	}
 
 	@Test
@@ -91,9 +93,9 @@ public class TokenTests {
 		String header = "{\"kid\": \"key-id\",  \"typ\": \"JWT\"}";
 		String claims = "{\"exp\": 2147483647, \"iss\": \"http://localhost:8080/uaa/oauth/token\"}";
 		Token token = createToken(header, claims);
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> token.getSignatureAlgorithm())
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		token.getSignatureAlgorithm();
 	}
 
 	@Test
@@ -101,9 +103,9 @@ public class TokenTests {
 		String header = "{\"alg\": \"RS256\", \"kid\": \"key-id\", \"typ\": \"JWT\"}";
 		String claims = "{\"exp\": 2147483647}";
 		Token token = createToken(header, claims);
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> token.getIssuer())
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		token.getIssuer();
 	}
 
 	@Test
@@ -111,9 +113,9 @@ public class TokenTests {
 		String header = "{\"alg\": \"RS256\", \"typ\": \"JWT\"}";
 		String claims = "{\"exp\": 2147483647}";
 		Token token = createToken(header, claims);
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> token.getKeyId())
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		token.getKeyId();
 	}
 
 	@Test
@@ -121,9 +123,9 @@ public class TokenTests {
 		String header = "{\"alg\": \"RS256\",  \"kid\": \"key-id\", \"typ\": \"JWT\"}";
 		String claims = "{\"iss\": \"http://localhost:8080/uaa/oauth/token\"" + "}";
 		Token token = createToken(header, claims);
-		assertThatExceptionOfType(CloudFoundryAuthorizationException.class)
-				.isThrownBy(() -> token.getExpiry())
-				.satisfies(reasonRequirement(Reason.INVALID_TOKEN));
+		this.thrown
+				.expect(AuthorizationExceptionMatcher.withReason(Reason.INVALID_TOKEN));
+		token.getExpiry();
 	}
 
 	private Token createToken(String header, String claims) {
@@ -131,11 +133,6 @@ public class TokenTests {
 				+ Base64Utils.encodeToString(claims.getBytes()) + "."
 				+ Base64Utils.encodeToString("signature".getBytes()));
 		return token;
-	}
-
-	private Consumer<CloudFoundryAuthorizationException> reasonRequirement(
-			Reason reason) {
-		return (ex) -> assertThat(ex.getReason()).isEqualTo(reason);
 	}
 
 }

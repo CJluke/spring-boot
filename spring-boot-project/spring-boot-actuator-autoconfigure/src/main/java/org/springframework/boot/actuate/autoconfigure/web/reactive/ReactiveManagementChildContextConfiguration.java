@@ -23,7 +23,6 @@ import org.springframework.boot.actuate.autoconfigure.web.server.ManagementWebSe
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
 import org.springframework.boot.autoconfigure.web.embedded.JettyWebServerFactoryCustomizer;
-import org.springframework.boot.autoconfigure.web.embedded.NettyWebServerFactoryCustomizer;
 import org.springframework.boot.autoconfigure.web.embedded.TomcatWebServerFactoryCustomizer;
 import org.springframework.boot.autoconfigure.web.embedded.UndertowWebServerFactoryCustomizer;
 import org.springframework.boot.autoconfigure.web.reactive.ReactiveWebServerFactoryCustomizer;
@@ -65,8 +64,7 @@ public class ReactiveManagementChildContextConfiguration {
 			super(beanFactory, ReactiveWebServerFactoryCustomizer.class,
 					TomcatWebServerFactoryCustomizer.class,
 					JettyWebServerFactoryCustomizer.class,
-					UndertowWebServerFactoryCustomizer.class,
-					NettyWebServerFactoryCustomizer.class);
+					UndertowWebServerFactoryCustomizer.class);
 		}
 
 	}

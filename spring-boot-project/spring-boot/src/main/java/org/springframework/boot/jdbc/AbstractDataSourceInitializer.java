@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ public abstract class AbstractDataSourceInitializer {
 		}
 		populator.addScript(this.resourceLoader.getResource(schemaLocation));
 		populator.setContinueOnError(true);
-		customize(populator);
 		DatabasePopulatorUtils.execute(populator, this.dataSource);
 	}
 
@@ -75,13 +74,6 @@ public abstract class AbstractDataSourceInitializer {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Customize the {@link ResourceDatabasePopulator}.
-	 * @param populator the configured database populator
-	 */
-	protected void customize(ResourceDatabasePopulator populator) {
 	}
 
 	protected abstract DataSourceInitializationMode getMode();

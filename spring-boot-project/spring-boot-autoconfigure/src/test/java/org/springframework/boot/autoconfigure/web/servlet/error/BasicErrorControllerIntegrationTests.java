@@ -36,7 +36,6 @@ import org.junit.After;
 import org.junit.Test;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
@@ -47,6 +46,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -94,29 +94,15 @@ public class BasicErrorControllerIntegrationTests {
 	}
 
 	@Test
-	public void testErrorForMachineClientTraceParamTrue() {
-		errorForMachineClientOnTraceParam("?trace=true", true);
-	}
-
-	@Test
-	public void testErrorForMachineClientTraceParamFalse() {
-		errorForMachineClientOnTraceParam("?trace=false", false);
-	}
-
-	@Test
-	public void testErrorForMachineClientTraceParamAbsent() {
-		errorForMachineClientOnTraceParam("", false);
-	}
-
 	@SuppressWarnings("rawtypes")
-	private void errorForMachineClientOnTraceParam(String path, boolean expectedTrace) {
+	public void testErrorForMachineClientTraceParamStacktrace() {
 		load("--server.error.include-exception=true",
 				"--server.error.include-stacktrace=on-trace-param");
-		ResponseEntity<Map> entity = new TestRestTemplate().getForEntity(createUrl(path),
-				Map.class);
+		ResponseEntity<Map> entity = new TestRestTemplate()
+				.getForEntity(createUrl("?trace=true"), Map.class);
 		assertErrorAttributes(entity.getBody(), "500", "Internal Server Error",
 				IllegalStateException.class, "Expected!", "/");
-		assertThat(entity.getBody().containsKey("trace")).isEqualTo(expectedTrace);
+		assertThat(entity.getBody().containsKey("trace")).isTrue();
 	}
 
 	@Test
@@ -183,7 +169,6 @@ public class BasicErrorControllerIntegrationTests {
 		load("--server.error.include-exception=true");
 		RequestEntity request = RequestEntity
 				.post(URI.create(createUrl("/bodyValidation")))
-				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON).body("{}");
 		ResponseEntity<Map> entity = new TestRestTemplate().exchange(request, Map.class);
 		String resp = entity.getBody().toString();
@@ -250,7 +235,7 @@ public class BasicErrorControllerIntegrationTests {
 	@Target(ElementType.TYPE)
 	@Retention(RetentionPolicy.RUNTIME)
 	@Documented
-	@ImportAutoConfiguration({ ServletWebServerFactoryAutoConfiguration.class,
+	@Import({ ServletWebServerFactoryAutoConfiguration.class,
 			DispatcherServletAutoConfiguration.class, WebMvcAutoConfiguration.class,
 			HttpMessageConvertersAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
 			PropertyPlaceholderAutoConfiguration.class })
@@ -260,7 +245,7 @@ public class BasicErrorControllerIntegrationTests {
 
 	@Configuration
 	@MinimalWebConfiguration
-	@ImportAutoConfiguration(FreeMarkerAutoConfiguration.class)
+	@Import(FreeMarkerAutoConfiguration.class)
 	public static class TestConfiguration {
 
 		// For manual testing

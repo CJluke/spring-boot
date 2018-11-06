@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package org.springframework.boot.test.autoconfigure.web.client;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -38,6 +39,9 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @RunWith(SpringRunner.class)
 @RestClientTest({ ExampleRestClient.class, AnotherExampleRestClient.class })
 public class RestClientTestTwoComponentsIntegrationTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Autowired
 	private ExampleRestClient client1;
@@ -53,10 +57,10 @@ public class RestClientTestTwoComponentsIntegrationTests {
 
 	@Test
 	public void serverShouldNotWork() {
-		assertThatIllegalStateException()
-				.isThrownBy(() -> this.server.expect(requestTo("/test"))
-						.andRespond(withSuccess("hello", MediaType.TEXT_HTML)))
-				.withMessageContaining("Unable to use auto-configured");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Unable to use auto-configured");
+		this.server.expect(requestTo("/test"))
+				.andRespond(withSuccess("hello", MediaType.TEXT_HTML));
 	}
 
 	@Test

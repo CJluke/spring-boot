@@ -46,8 +46,7 @@ public class HealthEndpointAutoConfigurationTests {
 
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
 			.withConfiguration(
-					AutoConfigurations.of(HealthIndicatorAutoConfiguration.class,
-							HealthEndpointAutoConfiguration.class));
+					AutoConfigurations.of(HealthEndpointAutoConfiguration.class));
 
 	@Test
 	public void healthEndpointShowDetailsDefault() {
@@ -125,5 +124,4 @@ public class HealthEndpointAutoConfigurationTests {
 		}
 
 	}
-
 }

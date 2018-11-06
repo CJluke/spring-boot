@@ -123,9 +123,10 @@ public class ConditionsReportEndpoint {
 			this.negativeMatches = new LinkedHashMap<>();
 			this.exclusions = report.getExclusions();
 			this.unconditionalClasses = report.getUnconditionalClasses();
-			report.getConditionAndOutcomesBySource().forEach(this::add);
-			this.parentId = (context.getParent() != null) ? context.getParent().getId()
-					: null;
+			report.getConditionAndOutcomesBySource().forEach(
+					(source, conditionAndOutcomes) -> add(source, conditionAndOutcomes));
+			this.parentId = context.getParent() == null ? null
+					: context.getParent().getId();
 		}
 
 		private void add(String source, ConditionAndOutcomes conditionAndOutcomes) {
@@ -174,8 +175,8 @@ public class ConditionsReportEndpoint {
 
 		public MessageAndConditions(ConditionAndOutcomes conditionAndOutcomes) {
 			for (ConditionAndOutcome conditionAndOutcome : conditionAndOutcomes) {
-				List<MessageAndCondition> target = (conditionAndOutcome.getOutcome()
-						.isMatch() ? this.matched : this.notMatched);
+				List<MessageAndCondition> target = conditionAndOutcome.getOutcome()
+						.isMatch() ? this.matched : this.notMatched;
 				target.add(new MessageAndCondition(conditionAndOutcome));
 			}
 		}
@@ -208,7 +209,7 @@ public class ConditionsReportEndpoint {
 				this.message = outcome.getMessage();
 			}
 			else {
-				this.message = outcome.isMatch() ? "matched" : "did not match";
+				this.message = (outcome.isMatch() ? "matched" : "did not match");
 			}
 		}
 

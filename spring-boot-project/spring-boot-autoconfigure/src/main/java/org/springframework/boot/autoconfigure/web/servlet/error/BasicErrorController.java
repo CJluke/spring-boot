@@ -33,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
@@ -82,7 +83,7 @@ public class BasicErrorController extends AbstractErrorController {
 		return this.errorProperties.getPath();
 	}
 
-	@RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
+	@RequestMapping(produces = "text/html")
 	public ModelAndView errorHtml(HttpServletRequest request,
 			HttpServletResponse response) {
 		HttpStatus status = getStatus(request);
@@ -90,10 +91,11 @@ public class BasicErrorController extends AbstractErrorController {
 				request, isIncludeStackTrace(request, MediaType.TEXT_HTML)));
 		response.setStatus(status.value());
 		ModelAndView modelAndView = resolveErrorView(request, response, status, model);
-		return (modelAndView != null) ? modelAndView : new ModelAndView("error", model);
+		return (modelAndView == null ? new ModelAndView("error", model) : modelAndView);
 	}
 
 	@RequestMapping
+	@ResponseBody
 	public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {
 		Map<String, Object> body = getErrorAttributes(request,
 				isIncludeStackTrace(request, MediaType.ALL));

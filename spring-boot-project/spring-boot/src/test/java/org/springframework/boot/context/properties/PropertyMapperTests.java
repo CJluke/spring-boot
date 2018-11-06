@@ -19,10 +19,11 @@ package org.springframework.boot.context.properties;
 import java.util.function.Supplier;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link PropertyMapper}.
@@ -33,44 +34,21 @@ public class PropertyMapperTests {
 
 	private PropertyMapper map = PropertyMapper.get();
 
-	@Test
-	public void fromNullValue() {
-		ExampleDest dest = new ExampleDest();
-		this.map.from((String) null).to(dest::setName);
-		assertThat(dest.getName()).isNull();
-	}
-
-	@Test
-	public void fromValue() {
-		ExampleDest dest = new ExampleDest();
-		this.map.from("Hello World").to(dest::setName);
-		assertThat(dest.getName()).isEqualTo("Hello World");
-	}
-
-	@Test
-	public void fromValueAsIntShouldAdaptValue() {
-		Integer result = this.map.from("123").asInt(Long::valueOf)
-				.toInstance(Integer::new);
-		assertThat(result).isEqualTo(123);
-	}
-
-	@Test
-	public void fromValueAlwaysApplyingWhenNonNullShouldAlwaysApplyNonNullToSource() {
-		this.map.alwaysApplyingWhenNonNull().from((String) null).toCall(Assert::fail);
-	}
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void fromWhenSupplierIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.map.from((Supplier<?>) null))
-				.withMessageContaining("Supplier must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Supplier must not be null");
+		this.map.from(null);
 	}
 
 	@Test
 	public void toWhenConsumerIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.map.from(() -> "").to(null))
-				.withMessageContaining("Consumer must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Consumer must not be null");
+		this.map.from(() -> "").to(null);
 	}
 
 	@Test
@@ -90,9 +68,9 @@ public class PropertyMapperTests {
 
 	@Test
 	public void asWhenAdapterIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.map.from(() -> "").as(null))
-				.withMessageContaining("Adapter must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Adapter must not be null");
+		this.map.from(() -> "").as(null);
 	}
 
 	@Test
@@ -116,24 +94,24 @@ public class PropertyMapperTests {
 
 	@Test
 	public void whenTrueWhenValueIsTrueShouldMap() {
-		Boolean result = this.map.from(true).whenTrue().toInstance(Boolean::new);
+		Boolean result = this.map.from(() -> true).whenTrue().toInstance(Boolean::new);
 		assertThat(result).isTrue();
 	}
 
 	@Test
 	public void whenTrueWhenValueIsFalseShouldNotMap() {
-		this.map.from(false).whenTrue().toCall(Assert::fail);
+		this.map.from(() -> false).whenTrue().toCall(Assert::fail);
 	}
 
 	@Test
 	public void whenFalseWhenValueIsFalseShouldMap() {
-		Boolean result = this.map.from(false).whenFalse().toInstance(Boolean::new);
+		Boolean result = this.map.from(() -> false).whenFalse().toInstance(Boolean::new);
 		assertThat(result).isFalse();
 	}
 
 	@Test
 	public void whenFalseWhenValueIsTrueShouldNotMap() {
-		this.map.from(true).whenFalse().toCall(Assert::fail);
+		this.map.from(() -> true).whenFalse().toCall(Assert::fail);
 	}
 
 	@Test
@@ -143,29 +121,30 @@ public class PropertyMapperTests {
 
 	@Test
 	public void whenHasTextWhenValueIsEmptyShouldNotMap() {
-		this.map.from("").whenHasText().toCall(Assert::fail);
+		this.map.from(() -> "").whenHasText().toCall(Assert::fail);
 	}
 
 	@Test
 	public void whenHasTextWhenValueHasTextShouldMap() {
-		Integer result = this.map.from(123).whenHasText().toInstance(Integer::new);
+		Integer result = this.map.from(() -> 123).whenHasText().toInstance(Integer::new);
 		assertThat(result).isEqualTo(123);
 	}
 
 	@Test
 	public void whenEqualToWhenValueIsEqualShouldMatch() {
-		String result = this.map.from("123").whenEqualTo("123").toInstance(String::new);
+		String result = this.map.from(() -> "123").whenEqualTo("123")
+				.toInstance(String::new);
 		assertThat(result).isEqualTo("123");
 	}
 
 	@Test
 	public void whenEqualToWhenValueIsNotEqualShouldNotMatch() {
-		this.map.from("123").whenEqualTo("321").toCall(Assert::fail);
+		this.map.from(() -> "123").whenEqualTo("321").toCall(Assert::fail);
 	}
 
 	@Test
 	public void whenInstanceOfWhenValueIsTargetTypeShouldMatch() {
-		Long result = this.map.from(123L).whenInstanceOf(Long.class)
+		Long result = this.map.from(() -> 123L).whenInstanceOf(Long.class)
 				.toInstance((value) -> value + 1);
 		assertThat(result).isEqualTo(124L);
 	}
@@ -178,13 +157,14 @@ public class PropertyMapperTests {
 
 	@Test
 	public void whenWhenValueMatchesShouldMap() {
-		String result = this.map.from("123").when("123"::equals).toInstance(String::new);
+		String result = this.map.from(() -> "123").when("123"::equals)
+				.toInstance(String::new);
 		assertThat(result).isEqualTo("123");
 	}
 
 	@Test
 	public void whenWhenValueDoesNotMatchShouldNotMap() {
-		this.map.from("123").when("321"::equals).toCall(Assert::fail);
+		this.map.from(() -> "123").when("321"::equals).toCall(Assert::fail);
 	}
 
 	@Test

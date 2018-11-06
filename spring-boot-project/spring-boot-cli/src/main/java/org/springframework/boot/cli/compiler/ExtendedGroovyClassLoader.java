@@ -18,7 +18,6 @@ package org.springframework.boot.cli.compiler;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,7 +25,6 @@ import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -117,7 +115,7 @@ public class ExtendedGroovyClassLoader extends GroovyClassLoader {
 		InputStream resourceStream = super.getResourceAsStream(name);
 		if (resourceStream == null) {
 			byte[] bytes = this.classResources.get(name);
-			resourceStream = (bytes != null) ? new ByteArrayInputStream(bytes) : null;
+			resourceStream = bytes == null ? null : new ByteArrayInputStream(bytes);
 		}
 		return resourceStream;
 	}
@@ -230,11 +228,6 @@ public class ExtendedGroovyClassLoader extends GroovyClassLoader {
 				}
 			}
 			return false;
-		}
-
-		@Override
-		public Enumeration<URL> getResources(String name) throws IOException {
-			return this.groovyOnlyClassLoader.getResources(name);
 		}
 
 		@Override

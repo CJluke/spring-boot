@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,8 @@ package org.springframework.boot.autoconfigure.web.servlet;
 import javax.servlet.MultipartConfigElement;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.PropertyMapper;
-import org.springframework.boot.convert.DataSizeUnit;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
-import org.springframework.util.unit.DataSize;
-import org.springframework.util.unit.DataUnit;
+import org.springframework.util.StringUtils;
 
 /**
  * Properties to be used in configuring a {@link MultipartConfigElement}.
@@ -40,11 +37,10 @@ import org.springframework.util.unit.DataUnit;
  * <p>
  * These properties are ultimately passed to {@link MultipartConfigFactory} which means
  * you may specify numeric values using {@literal long} values or using more readable
- * {@link DataSize} variants.
+ * {@literal String} variants that accept {@literal KB} or {@literal MB} suffixes.
  *
  * @author Josh Long
  * @author Toshiaki Maki
- * @author Stephane Nicoll
  * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "spring.servlet.multipart", ignoreUnknownFields = false)
@@ -61,21 +57,22 @@ public class MultipartProperties {
 	private String location;
 
 	/**
-	 * Max file size.
+	 * Max file size. Values can use the suffixes "MB" or "KB" to indicate megabytes or
+	 * kilobytes, respectively.
 	 */
-	@DataSizeUnit(DataUnit.MEGABYTES)
-	private DataSize maxFileSize = DataSize.ofMegabytes(1);
+	private String maxFileSize = "1MB";
 
 	/**
-	 * Max request size.
+	 * Max request size. Values can use the suffixes "MB" or "KB" to indicate megabytes or
+	 * kilobytes, respectively.
 	 */
-	@DataSizeUnit(DataUnit.MEGABYTES)
-	private DataSize maxRequestSize = DataSize.ofMegabytes(10);
+	private String maxRequestSize = "10MB";
 
 	/**
-	 * Threshold after which files are written to disk.
+	 * Threshold after which files are written to disk. Values can use the suffixes "MB"
+	 * or "KB" to indicate megabytes or kilobytes, respectively.
 	 */
-	private DataSize fileSizeThreshold = DataSize.ofBytes(0);
+	private String fileSizeThreshold = "0";
 
 	/**
 	 * Whether to resolve the multipart request lazily at the time of file or parameter
@@ -99,27 +96,27 @@ public class MultipartProperties {
 		this.location = location;
 	}
 
-	public DataSize getMaxFileSize() {
+	public String getMaxFileSize() {
 		return this.maxFileSize;
 	}
 
-	public void setMaxFileSize(DataSize maxFileSize) {
+	public void setMaxFileSize(String maxFileSize) {
 		this.maxFileSize = maxFileSize;
 	}
 
-	public DataSize getMaxRequestSize() {
+	public String getMaxRequestSize() {
 		return this.maxRequestSize;
 	}
 
-	public void setMaxRequestSize(DataSize maxRequestSize) {
+	public void setMaxRequestSize(String maxRequestSize) {
 		this.maxRequestSize = maxRequestSize;
 	}
 
-	public DataSize getFileSizeThreshold() {
+	public String getFileSizeThreshold() {
 		return this.fileSizeThreshold;
 	}
 
-	public void setFileSizeThreshold(DataSize fileSizeThreshold) {
+	public void setFileSizeThreshold(String fileSizeThreshold) {
 		this.fileSizeThreshold = fileSizeThreshold;
 	}
 
@@ -137,11 +134,18 @@ public class MultipartProperties {
 	 */
 	public MultipartConfigElement createMultipartConfig() {
 		MultipartConfigFactory factory = new MultipartConfigFactory();
-		PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-		map.from(this.fileSizeThreshold).to(factory::setFileSizeThreshold);
-		map.from(this.location).whenHasText().to(factory::setLocation);
-		map.from(this.maxRequestSize).to(factory::setMaxRequestSize);
-		map.from(this.maxFileSize).to(factory::setMaxFileSize);
+		if (StringUtils.hasText(this.fileSizeThreshold)) {
+			factory.setFileSizeThreshold(this.fileSizeThreshold);
+		}
+		if (StringUtils.hasText(this.location)) {
+			factory.setLocation(this.location);
+		}
+		if (StringUtils.hasText(this.maxRequestSize)) {
+			factory.setMaxRequestSize(this.maxRequestSize);
+		}
+		if (StringUtils.hasText(this.maxFileSize)) {
+			factory.setMaxFileSize(this.maxFileSize);
+		}
 		return factory.createMultipartConfig();
 	}
 

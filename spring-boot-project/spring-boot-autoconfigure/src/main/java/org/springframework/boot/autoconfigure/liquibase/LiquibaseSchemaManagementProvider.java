@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 
 package org.springframework.boot.autoconfigure.liquibase;
 
-import java.util.stream.StreamSupport;
+import java.util.List;
 
 import javax.sql.DataSource;
 
 import liquibase.integration.spring.SpringLiquibase;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.jdbc.SchemaManagement;
 import org.springframework.boot.jdbc.SchemaManagementProvider;
 
@@ -34,18 +33,20 @@ import org.springframework.boot.jdbc.SchemaManagementProvider;
  */
 class LiquibaseSchemaManagementProvider implements SchemaManagementProvider {
 
-	private final Iterable<SpringLiquibase> liquibaseInstances;
+	private final List<SpringLiquibase> liquibaseInstances;
 
-	LiquibaseSchemaManagementProvider(ObjectProvider<SpringLiquibase> liquibases) {
+	LiquibaseSchemaManagementProvider(List<SpringLiquibase> liquibases) {
 		this.liquibaseInstances = liquibases;
 	}
 
 	@Override
 	public SchemaManagement getSchemaManagement(DataSource dataSource) {
-		return StreamSupport.stream(this.liquibaseInstances.spliterator(), false)
-				.map(SpringLiquibase::getDataSource).filter(dataSource::equals)
-				.findFirst().map((managedDataSource) -> SchemaManagement.MANAGED)
-				.orElse(SchemaManagement.UNMANAGED);
+		for (SpringLiquibase liquibaseInstance : this.liquibaseInstances) {
+			if (dataSource.equals(liquibaseInstance.getDataSource())) {
+				return SchemaManagement.MANAGED;
+			}
+		}
+		return SchemaManagement.UNMANAGED;
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import org.springframework.boot.loader.tools.MainClassFinder.MainClass;
@@ -32,7 +33,6 @@ import org.springframework.boot.loader.tools.sample.ClassWithMainMethod;
 import org.springframework.boot.loader.tools.sample.ClassWithoutMainMethod;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Tests for {@link MainClassFinder}.
@@ -43,6 +43,9 @@ public class MainClassFinderTests {
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private TestJarFile testJarFile;
 
@@ -80,11 +83,10 @@ public class MainClassFinderTests {
 	public void findSingleJarSearch() throws Exception {
 		this.testJarFile.addClass("a/B.class", ClassWithMainMethod.class);
 		this.testJarFile.addClass("a/b/c/E.class", ClassWithMainMethod.class);
-		assertThatIllegalStateException()
-				.isThrownBy(() -> MainClassFinder
-						.findSingleMainClass(this.testJarFile.getJarFile(), ""))
-				.withMessageContaining("Unable to find a single main class "
-						+ "from the following candidates [a.B, a.b.c.E]");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Unable to find a single main class "
+				+ "from the following candidates [a.B, a.b.c.E]");
+		MainClassFinder.findSingleMainClass(this.testJarFile.getJarFile(), "");
 	}
 
 	@Test
@@ -136,11 +138,10 @@ public class MainClassFinderTests {
 	public void findSingleFolderSearch() throws Exception {
 		this.testJarFile.addClass("a/B.class", ClassWithMainMethod.class);
 		this.testJarFile.addClass("a/b/c/E.class", ClassWithMainMethod.class);
-		assertThatIllegalStateException()
-				.isThrownBy(() -> MainClassFinder
-						.findSingleMainClass(this.testJarFile.getJarSource()))
-				.withMessageContaining("Unable to find a single main class "
-						+ "from the following candidates [a.B, a.b.c.E]");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Unable to find a single main class "
+				+ "from the following candidates [a.B, a.b.c.E]");
+		MainClassFinder.findSingleMainClass(this.testJarFile.getJarSource());
 	}
 
 	@Test

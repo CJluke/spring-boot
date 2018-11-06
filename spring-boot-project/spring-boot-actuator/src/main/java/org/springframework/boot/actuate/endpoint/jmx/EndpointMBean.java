@@ -53,20 +53,17 @@ public class EndpointMBean implements DynamicMBean {
 
 	private final JmxOperationResponseMapper responseMapper;
 
-	private final ClassLoader classLoader;
-
 	private final ExposableJmxEndpoint endpoint;
 
 	private final MBeanInfo info;
 
 	private final Map<String, JmxOperation> operations;
 
-	EndpointMBean(JmxOperationResponseMapper responseMapper, ClassLoader classLoader,
+	EndpointMBean(JmxOperationResponseMapper responseMapper,
 			ExposableJmxEndpoint endpoint) {
 		Assert.notNull(responseMapper, "ResponseMapper must not be null");
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		this.responseMapper = responseMapper;
-		this.classLoader = classLoader;
 		this.endpoint = endpoint;
 		this.info = new MBeanInfoFactory(responseMapper).getMBeanInfo(endpoint);
 		this.operations = getOperations(endpoint);
@@ -89,60 +86,28 @@ public class EndpointMBean implements DynamicMBean {
 			throws MBeanException, ReflectionException {
 		JmxOperation operation = this.operations.get(actionName);
 		if (operation == null) {
-			String message = "Endpoint with id '" + this.endpoint.getEndpointId()
+			String message = "Endpoint with id '" + this.endpoint.getId()
 					+ "' has no operation named " + actionName;
 			throw new ReflectionException(new IllegalArgumentException(message), message);
 		}
-		ClassLoader previousClassLoader = overrideThreadContextClassLoader(
-				this.classLoader);
-		try {
-			return invoke(operation, params);
-		}
-		finally {
-			overrideThreadContextClassLoader(previousClassLoader);
-		}
+		return invoke(operation, params);
 	}
 
-	private ClassLoader overrideThreadContextClassLoader(ClassLoader classLoader) {
-		if (classLoader != null) {
-			try {
-				return ClassUtils.overrideThreadContextClassLoader(classLoader);
-			}
-			catch (SecurityException ex) {
-				// can't set class loader, ignore it and proceed
-			}
-		}
-		return null;
-	}
-
-	private Object invoke(JmxOperation operation, Object[] params)
-			throws MBeanException, ReflectionException {
+	private Object invoke(JmxOperation operation, Object[] params) {
 		try {
 			String[] parameterNames = operation.getParameters().stream()
 					.map(JmxOperationParameter::getName).toArray(String[]::new);
 			Map<String, Object> arguments = getArguments(parameterNames, params);
-			InvocationContext context = new InvocationContext(SecurityContext.NONE,
-					arguments);
-			Object result = operation.invoke(context);
+			Object result = operation
+					.invoke(new InvocationContext(SecurityContext.NONE, arguments));
 			if (REACTOR_PRESENT) {
 				result = ReactiveHandler.handle(result);
 			}
 			return this.responseMapper.mapResponse(result);
 		}
 		catch (InvalidEndpointRequestException ex) {
-			throw new ReflectionException(new IllegalArgumentException(ex.getMessage()),
-					ex.getMessage());
+			throw new IllegalArgumentException(ex.getMessage(), ex);
 		}
-		catch (Exception ex) {
-			throw new MBeanException(translateIfNecessary(ex), ex.getMessage());
-		}
-	}
-
-	private Exception translateIfNecessary(Exception exception) {
-		if (exception.getClass().getName().startsWith("java.")) {
-			return exception;
-		}
-		return new IllegalStateException(exception.getMessage());
 	}
 
 	private Map<String, Object> getArguments(String[] parameterNames, Object[] params) {

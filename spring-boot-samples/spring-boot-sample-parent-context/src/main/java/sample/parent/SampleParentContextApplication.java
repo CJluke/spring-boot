@@ -36,11 +36,6 @@ import org.springframework.integration.file.FileWritingMessageHandler;
 @EnableConfigurationProperties(ServiceProperties.class)
 public class SampleParentContextApplication {
 
-	public static void main(String[] args) throws Exception {
-		new SpringApplicationBuilder(Parent.class)
-				.child(SampleParentContextApplication.class).run(args);
-	}
-
 	@EnableAutoConfiguration
 	protected static class Parent {
 
@@ -86,6 +81,11 @@ public class SampleParentContextApplication {
 
 		}
 
+	}
+
+	public static void main(String[] args) {
+		new SpringApplicationBuilder(Parent.class)
+				.child(SampleParentContextApplication.class).run(args);
 	}
 
 }

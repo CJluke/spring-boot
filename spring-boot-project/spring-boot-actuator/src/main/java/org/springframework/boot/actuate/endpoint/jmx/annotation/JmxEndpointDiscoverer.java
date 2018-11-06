@@ -19,7 +19,6 @@ package org.springframework.boot.actuate.endpoint.jmx.annotation;
 import java.util.Collection;
 
 import org.springframework.boot.actuate.endpoint.EndpointFilter;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.annotation.DiscoveredOperationMethod;
 import org.springframework.boot.actuate.endpoint.annotation.EndpointDiscoverer;
 import org.springframework.boot.actuate.endpoint.invoke.OperationInvoker;
@@ -55,14 +54,14 @@ public class JmxEndpointDiscoverer
 	}
 
 	@Override
-	protected ExposableJmxEndpoint createEndpoint(Object endpointBean, EndpointId id,
+	protected ExposableJmxEndpoint createEndpoint(Object endpointBean, String id,
 			boolean enabledByDefault, Collection<JmxOperation> operations) {
 		return new DiscoveredJmxEndpoint(this, endpointBean, id, enabledByDefault,
 				operations);
 	}
 
 	@Override
-	protected JmxOperation createOperation(EndpointId endpointId,
+	protected JmxOperation createOperation(String endpointId,
 			DiscoveredOperationMethod operationMethod, OperationInvoker invoker) {
 		return new DiscoveredJmxOperation(endpointId, operationMethod, invoker);
 	}

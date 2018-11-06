@@ -1,7 +1,11 @@
-plugins {
-	id 'application'
-	id 'org.springframework.boot' version '{version}'
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
 }
+
+apply plugin: 'application'
+apply plugin: 'org.springframework.boot'
 
 task echoMainClassName {
 	dependsOn compileJava

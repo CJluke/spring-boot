@@ -52,68 +52,61 @@ public class HealthEndpointWebIntegrationTests {
 
 	@Test
 	public void whenHealthIsDown503ResponseIsReturned() {
-		HealthIndicatorRegistry registry = context.getBean(HealthIndicatorRegistry.class);
-		registry.register("charlie", () -> Health.down().build());
-		try {
-			client.get().uri("/actuator/health").exchange().expectStatus()
-					.isEqualTo(HttpStatus.SERVICE_UNAVAILABLE).expectBody()
-					.jsonPath("status").isEqualTo("DOWN").jsonPath("details.alpha.status")
-					.isEqualTo("UP").jsonPath("details.bravo.status").isEqualTo("UP")
-					.jsonPath("details.charlie.status").isEqualTo("DOWN");
-		}
-		finally {
-			registry.unregister("charlie");
-		}
-	}
-
-	@Test
-	public void whenHealthIndicatorIsRemovedResponseIsAltered() {
-		HealthIndicatorRegistry registry = context.getBean(HealthIndicatorRegistry.class);
-		HealthIndicator bravo = registry.unregister("bravo");
-		try {
-			client.get().uri("/actuator/health").exchange().expectStatus().isOk()
-					.expectBody().jsonPath("status").isEqualTo("UP")
-					.jsonPath("details.alpha.status").isEqualTo("UP")
-					.jsonPath("details.bravo.status").doesNotExist();
-		}
-		finally {
-			registry.register("bravo", bravo);
-		}
+		context.getBean("alphaHealthIndicator", TestHealthIndicator.class)
+				.setHealth(Health.down().build());
+		client.get().uri("/actuator/health").exchange().expectStatus()
+				.isEqualTo(HttpStatus.SERVICE_UNAVAILABLE).expectBody().jsonPath("status")
+				.isEqualTo("DOWN").jsonPath("details.alpha.status").isEqualTo("DOWN")
+				.jsonPath("details.bravo.status").isEqualTo("UP");
 	}
 
 	@Configuration
 	public static class TestConfiguration {
 
 		@Bean
-		public HealthIndicatorRegistry healthIndicatorFactory(
+		public HealthEndpoint healthEndpoint(
 				Map<String, HealthIndicator> healthIndicators) {
-			return new HealthIndicatorRegistryFactory()
-					.createHealthIndicatorRegistry(healthIndicators);
-		}
-
-		@Bean
-		public HealthEndpoint healthEndpoint(HealthIndicatorRegistry registry) {
-			return new HealthEndpoint(new CompositeHealthIndicator(
-					new OrderedHealthAggregator(), registry));
+			return new HealthEndpoint(
+					new CompositeHealthIndicatorFactory().createHealthIndicator(
+							new OrderedHealthAggregator(), healthIndicators));
 		}
 
 		@Bean
 		public HealthEndpointWebExtension healthWebEndpointExtension(
-				HealthEndpoint healthEndpoint) {
-			return new HealthEndpointWebExtension(healthEndpoint,
+				Map<String, HealthIndicator> healthIndicators) {
+			return new HealthEndpointWebExtension(
+					new CompositeHealthIndicatorFactory().createHealthIndicator(
+							new OrderedHealthAggregator(), healthIndicators),
 					new HealthWebEndpointResponseMapper(new HealthStatusHttpMapper(),
 							ShowDetails.ALWAYS,
 							new HashSet<>(Arrays.asList("ACTUATOR"))));
 		}
 
 		@Bean
-		public HealthIndicator alphaHealthIndicator() {
-			return () -> Health.up().build();
+		public TestHealthIndicator alphaHealthIndicator() {
+			return new TestHealthIndicator();
 		}
 
 		@Bean
-		public HealthIndicator bravoHealthIndicator() {
-			return () -> Health.up().build();
+		public TestHealthIndicator bravoHealthIndicator() {
+			return new TestHealthIndicator();
+		}
+
+	}
+
+	private static class TestHealthIndicator implements HealthIndicator {
+
+		private Health health = Health.up().build();
+
+		@Override
+		public Health health() {
+			Health result = this.health;
+			this.health = Health.up().build();
+			return result;
+		}
+
+		void setHealth(Health health) {
+			this.health = health;
 		}
 
 	}

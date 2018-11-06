@@ -31,7 +31,6 @@ import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.convert.DurationUnit;
 
 /**
@@ -83,7 +82,7 @@ public class CassandraProperties {
 	private Compression compression = Compression.NONE;
 
 	/**
-	 * Class name of the load balancing policy. The class must have a default constructor.
+	 * Class name of the load balancing policy.
 	 */
 	private Class<? extends LoadBalancingPolicy> loadBalancingPolicy;
 
@@ -103,12 +102,12 @@ public class CassandraProperties {
 	private int fetchSize = QueryOptions.DEFAULT_FETCH_SIZE;
 
 	/**
-	 * Class name of the reconnection policy. The class must have a default constructor.
+	 * Reconnection policy class.
 	 */
 	private Class<? extends ReconnectionPolicy> reconnectionPolicy;
 
 	/**
-	 * Class name of the retry policy. The class must have a default constructor.
+	 * Class name of the retry policy.
 	 */
 	private Class<? extends RetryPolicy> retryPolicy;
 
@@ -131,12 +130,6 @@ public class CassandraProperties {
 	 * Enable SSL support.
 	 */
 	private boolean ssl = false;
-
-	/**
-	 * Whether to enable JMX reporting. Default to false as Cassandra JMX reporting is not
-	 * compatible with Dropwizard Metrics.
-	 */
-	private boolean jmxEnabled;
 
 	/**
 	 * Pool configuration.
@@ -195,13 +188,10 @@ public class CassandraProperties {
 		this.compression = compression;
 	}
 
-	@DeprecatedConfigurationProperty(reason = "Implement a ClusterBuilderCustomizer bean instead.")
-	@Deprecated
 	public Class<? extends LoadBalancingPolicy> getLoadBalancingPolicy() {
 		return this.loadBalancingPolicy;
 	}
 
-	@Deprecated
 	public void setLoadBalancingPolicy(
 			Class<? extends LoadBalancingPolicy> loadBalancingPolicy) {
 		this.loadBalancingPolicy = loadBalancingPolicy;
@@ -231,25 +221,19 @@ public class CassandraProperties {
 		this.fetchSize = fetchSize;
 	}
 
-	@DeprecatedConfigurationProperty(reason = "Implement a ClusterBuilderCustomizer bean instead.")
-	@Deprecated
 	public Class<? extends ReconnectionPolicy> getReconnectionPolicy() {
 		return this.reconnectionPolicy;
 	}
 
-	@Deprecated
 	public void setReconnectionPolicy(
 			Class<? extends ReconnectionPolicy> reconnectionPolicy) {
 		this.reconnectionPolicy = reconnectionPolicy;
 	}
 
-	@DeprecatedConfigurationProperty(reason = "Implement a ClusterBuilderCustomizer bean instead.")
-	@Deprecated
 	public Class<? extends RetryPolicy> getRetryPolicy() {
 		return this.retryPolicy;
 	}
 
-	@Deprecated
 	public void setRetryPolicy(Class<? extends RetryPolicy> retryPolicy) {
 		this.retryPolicy = retryPolicy;
 	}
@@ -276,14 +260,6 @@ public class CassandraProperties {
 
 	public void setSsl(boolean ssl) {
 		this.ssl = ssl;
-	}
-
-	public boolean isJmxEnabled() {
-		return this.jmxEnabled;
-	}
-
-	public void setJmxEnabled(boolean jmxEnabled) {
-		this.jmxEnabled = jmxEnabled;
 	}
 
 	public String getSchemaAction() {

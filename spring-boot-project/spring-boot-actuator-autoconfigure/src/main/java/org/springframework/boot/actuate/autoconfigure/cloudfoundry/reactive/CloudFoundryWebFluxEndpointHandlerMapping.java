@@ -27,7 +27,6 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.boot.actuate.autoconfigure.cloudfoundry.AccessLevel;
 import org.springframework.boot.actuate.autoconfigure.cloudfoundry.SecurityResponse;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
@@ -71,7 +70,7 @@ class CloudFoundryWebFluxEndpointHandlerMapping
 	protected ReactiveWebOperation wrapReactiveWebOperation(ExposableWebEndpoint endpoint,
 			WebOperation operation, ReactiveWebOperation reactiveWebOperation) {
 		return new SecureReactiveWebOperation(reactiveWebOperation,
-				this.securityInterceptor, endpoint.getEndpointId());
+				this.securityInterceptor, endpoint.getId());
 	}
 
 	@Override
@@ -114,11 +113,10 @@ class CloudFoundryWebFluxEndpointHandlerMapping
 
 		private final CloudFoundrySecurityInterceptor securityInterceptor;
 
-		private final EndpointId endpointId;
+		private final String endpointId;
 
 		SecureReactiveWebOperation(ReactiveWebOperation delegate,
-				CloudFoundrySecurityInterceptor securityInterceptor,
-				EndpointId endpointId) {
+				CloudFoundrySecurityInterceptor securityInterceptor, String endpointId) {
 			this.delegate = delegate;
 			this.securityInterceptor = securityInterceptor;
 			this.endpointId = endpointId;
@@ -127,8 +125,7 @@ class CloudFoundryWebFluxEndpointHandlerMapping
 		@Override
 		public Mono<ResponseEntity<Object>> handle(ServerWebExchange exchange,
 				Map<String, String> body) {
-			return this.securityInterceptor
-					.preHandle(exchange, this.endpointId.toLowerCaseString())
+			return this.securityInterceptor.preHandle(exchange, this.endpointId)
 					.flatMap((securityResponse) -> flatMapResponse(exchange, body,
 							securityResponse));
 		}

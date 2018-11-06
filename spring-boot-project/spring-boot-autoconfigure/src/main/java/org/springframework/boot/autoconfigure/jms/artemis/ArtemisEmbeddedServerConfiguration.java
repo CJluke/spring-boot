@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.boot.autoconfigure.jms.artemis;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.activemq.artemis.jms.server.config.JMSConfiguration;
 import org.apache.activemq.artemis.jms.server.config.JMSQueueConfiguration;
@@ -34,6 +33,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 
 /**
  * Configuration used to create the embedded Artemis server.
@@ -49,22 +49,20 @@ class ArtemisEmbeddedServerConfiguration {
 
 	private final ArtemisProperties properties;
 
-	private final ObjectProvider<ArtemisConfigurationCustomizer> configurationCustomizers;
+	private final List<ArtemisConfigurationCustomizer> configurationCustomizers;
 
 	private final List<JMSQueueConfiguration> queuesConfiguration;
 
 	private final List<TopicConfiguration> topicsConfiguration;
 
 	ArtemisEmbeddedServerConfiguration(ArtemisProperties properties,
-			ObjectProvider<ArtemisConfigurationCustomizer> configurationCustomizers,
-			ObjectProvider<JMSQueueConfiguration> queuesConfiguration,
-			ObjectProvider<TopicConfiguration> topicsConfiguration) {
+			ObjectProvider<List<ArtemisConfigurationCustomizer>> configurationCustomizers,
+			ObjectProvider<List<JMSQueueConfiguration>> queuesConfiguration,
+			ObjectProvider<List<TopicConfiguration>> topicsConfiguration) {
 		this.properties = properties;
-		this.configurationCustomizers = configurationCustomizers;
-		this.queuesConfiguration = queuesConfiguration.orderedStream()
-				.collect(Collectors.toList());
-		this.topicsConfiguration = topicsConfiguration.orderedStream()
-				.collect(Collectors.toList());
+		this.configurationCustomizers = configurationCustomizers.getIfAvailable();
+		this.queuesConfiguration = queuesConfiguration.getIfAvailable();
+		this.topicsConfiguration = topicsConfiguration.getIfAvailable();
 	}
 
 	@Bean
@@ -89,8 +87,12 @@ class ArtemisEmbeddedServerConfiguration {
 
 	private void customize(
 			org.apache.activemq.artemis.core.config.Configuration configuration) {
-		this.configurationCustomizers.orderedStream()
-				.forEach((customizer) -> customizer.customize(configuration));
+		if (this.configurationCustomizers != null) {
+			AnnotationAwareOrderComparator.sort(this.configurationCustomizers);
+			for (ArtemisConfigurationCustomizer customizer : this.configurationCustomizers) {
+				customizer.customize(configuration);
+			}
+		}
 	}
 
 	@Bean

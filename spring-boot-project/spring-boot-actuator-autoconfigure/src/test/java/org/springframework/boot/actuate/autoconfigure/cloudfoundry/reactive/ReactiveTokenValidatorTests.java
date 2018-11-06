@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.codec.binary.Base64;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -111,8 +112,9 @@ public class ReactiveTokenValidatorTests {
 					assertThat(((CloudFoundryAuthorizationException) ex).getReason())
 							.isEqualTo(Reason.INVALID_KEY_ID);
 				}).verify();
-		assertThat(this.tokenValidator).hasFieldOrPropertyWithValue("cachedTokenKeys",
-				VALID_KEYS);
+		Object cachedTokenKeys = ReflectionTestUtils.getField(this.tokenValidator,
+				"cachedTokenKeys");
+		assertThat(cachedTokenKeys).isEqualTo(VALID_KEYS);
 		fetchTokenKeys.assertWasSubscribed();
 	}
 
@@ -132,8 +134,9 @@ public class ReactiveTokenValidatorTests {
 				.create(this.tokenValidator.validate(
 						new Token(getSignedToken(header.getBytes(), claims.getBytes()))))
 				.verifyComplete();
-		assertThat(this.tokenValidator).hasFieldOrPropertyWithValue("cachedTokenKeys",
-				VALID_KEYS);
+		Object cachedTokenKeys = ReflectionTestUtils.getField(this.tokenValidator,
+				"cachedTokenKeys");
+		assertThat(cachedTokenKeys).isEqualTo(VALID_KEYS);
 		fetchTokenKeys.assertWasSubscribed();
 	}
 
@@ -150,8 +153,9 @@ public class ReactiveTokenValidatorTests {
 				.create(this.tokenValidator.validate(
 						new Token(getSignedToken(header.getBytes(), claims.getBytes()))))
 				.verifyComplete();
-		assertThat(this.tokenValidator).hasFieldOrPropertyWithValue("cachedTokenKeys",
-				VALID_KEYS);
+		Object cachedTokenKeys = ReflectionTestUtils.getField(this.tokenValidator,
+				"cachedTokenKeys");
+		assertThat(cachedTokenKeys).isEqualTo(VALID_KEYS);
 		fetchTokenKeys.assertWasSubscribed();
 	}
 
@@ -174,8 +178,9 @@ public class ReactiveTokenValidatorTests {
 					assertThat(((CloudFoundryAuthorizationException) ex).getReason())
 							.isEqualTo(Reason.INVALID_KEY_ID);
 				}).verify();
-		assertThat(this.tokenValidator).hasFieldOrPropertyWithValue("cachedTokenKeys",
-				VALID_KEYS);
+		Object cachedTokenKeys = ReflectionTestUtils.getField(this.tokenValidator,
+				"cachedTokenKeys");
+		assertThat(cachedTokenKeys).isEqualTo(VALID_KEYS);
 		fetchTokenKeys.assertWasSubscribed();
 	}
 
@@ -332,8 +337,7 @@ public class ReactiveTokenValidatorTests {
 				+ "J/OOn5zOs8yf26os0q3+JUM=\n-----END PRIVATE KEY-----";
 		String privateKey = signingKey.replace("-----BEGIN PRIVATE KEY-----\n", "");
 		privateKey = privateKey.replace("-----END PRIVATE KEY-----", "");
-		privateKey = privateKey.replace("\n", "");
-		byte[] pkcs8EncodedBytes = Base64Utils.decodeFromString(privateKey);
+		byte[] pkcs8EncodedBytes = Base64.decodeBase64(privateKey);
 		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8EncodedBytes);
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		return keyFactory.generatePrivate(keySpec);

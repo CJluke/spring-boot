@@ -17,7 +17,7 @@
 package org.springframework.boot.autoconfigure.web.reactive;
 
 import io.undertow.Undertow;
-import reactor.netty.http.server.HttpServer;
+import reactor.ipc.netty.http.server.HttpServer;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,8 +28,6 @@ import org.springframework.boot.web.embedded.undertow.UndertowReactiveWebServerF
 import org.springframework.boot.web.reactive.server.ReactiveWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.reactive.JettyResourceFactory;
-import org.springframework.http.client.reactive.ReactorResourceFactory;
 
 /**
  * Configuration classes for reactive web servers
@@ -47,17 +45,8 @@ abstract class ReactiveWebServerFactoryConfiguration {
 	static class EmbeddedNetty {
 
 		@Bean
-		@ConditionalOnMissingBean
-		public ReactorResourceFactory reactorServerResourceFactory() {
-			return new ReactorResourceFactory();
-		}
-
-		@Bean
-		public NettyReactiveWebServerFactory nettyReactiveWebServerFactory(
-				ReactorResourceFactory resourceFactory) {
-			NettyReactiveWebServerFactory serverFactory = new NettyReactiveWebServerFactory();
-			serverFactory.setResourceFactory(resourceFactory);
-			return serverFactory;
+		public NettyReactiveWebServerFactory nettyReactiveWebServerFactory() {
+			return new NettyReactiveWebServerFactory();
 		}
 
 	}
@@ -80,17 +69,8 @@ abstract class ReactiveWebServerFactoryConfiguration {
 	static class EmbeddedJetty {
 
 		@Bean
-		@ConditionalOnMissingBean
-		public JettyResourceFactory jettyServerResourceFactory() {
-			return new JettyResourceFactory();
-		}
-
-		@Bean
-		public JettyReactiveWebServerFactory jettyReactiveWebServerFactory(
-				JettyResourceFactory resourceFactory) {
-			JettyReactiveWebServerFactory serverFactory = new JettyReactiveWebServerFactory();
-			serverFactory.setResourceFactory(resourceFactory);
-			return serverFactory;
+		public JettyReactiveWebServerFactory jettyReactiveWebServerFactory() {
+			return new JettyReactiveWebServerFactory();
 		}
 
 	}

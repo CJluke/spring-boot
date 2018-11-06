@@ -35,8 +35,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		return new InMemoryUserDetailsManager(
 				User.withDefaultPasswordEncoder().username("user").password("password")
 						.authorities("ROLE_USER").build(),
-				User.withDefaultPasswordEncoder().username("beans").password("beans")
-						.authorities("ROLE_BEANS").build(),
 				User.withDefaultPasswordEncoder().username("admin").password("admin")
 						.authorities("ROLE_ACTUATOR", "ROLE_USER").build());
 	}
@@ -45,7 +43,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		// @formatter:off
 		http.authorizeRequests()
-				.mvcMatchers("/actuator/beans").hasRole("BEANS")
 				.requestMatchers(EndpointRequest.to("health", "info")).permitAll()
 				.requestMatchers(EndpointRequest.toAnyEndpoint().excluding(MappingsEndpoint.class)).hasRole("ACTUATOR")
 				.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()

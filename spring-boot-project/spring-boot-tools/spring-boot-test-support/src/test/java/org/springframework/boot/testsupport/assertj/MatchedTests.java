@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package org.springframework.boot.testsupport.assertj;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hamcrest.Matchers.startsWith;
 
 /**
@@ -29,6 +30,9 @@ import static org.hamcrest.Matchers.startsWith;
  */
 public class MatchedTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void byMatcherMatches() {
 		assertThat("1234").is(Matched.by(startsWith("12")));
@@ -36,9 +40,9 @@ public class MatchedTests {
 
 	@Test
 	public void byMatcherDoesNotMatch() {
-		assertThatExceptionOfType(AssertionError.class)
-				.isThrownBy(() -> assertThat("1234").is(Matched.by(startsWith("23"))))
-				.withMessageContaining("a string starting with \"23\"");
+		this.thrown.expect(AssertionError.class);
+		this.thrown.expectMessage("a string starting with \"23\"");
+		assertThat("1234").is(Matched.by(startsWith("23")));
 	}
 
 	@Test
@@ -48,9 +52,9 @@ public class MatchedTests {
 
 	@Test
 	public void whenMatcherDoesNotMatch() {
-		assertThatExceptionOfType(AssertionError.class)
-				.isThrownBy(() -> assertThat("1234").is(Matched.when(startsWith("23"))))
-				.withMessageContaining("a string starting with \"23\"");
+		this.thrown.expect(AssertionError.class);
+		this.thrown.expectMessage("a string starting with \"23\"");
+		assertThat("1234").is(Matched.when(startsWith("23")));
 	}
 
 }

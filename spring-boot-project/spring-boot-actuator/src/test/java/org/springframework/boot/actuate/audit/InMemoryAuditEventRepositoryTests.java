@@ -22,10 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link InMemoryAuditEventRepository}.
@@ -35,6 +36,9 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Vedran Pavic
  */
 public class InMemoryAuditEventRepositoryTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void lessThanCapacity() {
@@ -61,9 +65,10 @@ public class InMemoryAuditEventRepositoryTests {
 
 	@Test
 	public void addNullAuditEvent() {
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("AuditEvent must not be null");
 		InMemoryAuditEventRepository repository = new InMemoryAuditEventRepository();
-		assertThatIllegalArgumentException().isThrownBy(() -> repository.add(null))
-				.withMessageContaining("AuditEvent must not be null");
+		repository.add(null);
 	}
 
 	@Test

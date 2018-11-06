@@ -15,6 +15,6 @@
  */
 
 /**
- * Auto-configuration for JPA metrics.
+ * Auto-configuration for JDBC metrics.
  */
 package org.springframework.boot.actuate.autoconfigure.metrics.jdbc;

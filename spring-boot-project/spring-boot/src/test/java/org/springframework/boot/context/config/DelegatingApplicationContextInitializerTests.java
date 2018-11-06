@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package org.springframework.boot.context.config;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationContextInitializer;
@@ -28,8 +30,6 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link DelegatingApplicationContextInitializer}.
@@ -37,6 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Phillip Webb
  */
 public class DelegatingApplicationContextInitializerTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private final DelegatingApplicationContextInitializer initializer = new DelegatingApplicationContextInitializer();
 
@@ -70,8 +73,8 @@ public class DelegatingApplicationContextInitializerTests {
 		StaticApplicationContext context = new StaticApplicationContext();
 		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context,
 				"context.initializer.classes=missing.madeup.class");
-		assertThatExceptionOfType(ApplicationContextException.class)
-				.isThrownBy(() -> this.initializer.initialize(context));
+		this.thrown.expect(ApplicationContextException.class);
+		this.initializer.initialize(context);
 	}
 
 	@Test
@@ -79,8 +82,8 @@ public class DelegatingApplicationContextInitializerTests {
 		StaticApplicationContext context = new StaticApplicationContext();
 		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context,
 				"context.initializer.classes=" + Object.class.getName());
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.initializer.initialize(context));
+		this.thrown.expect(IllegalArgumentException.class);
+		this.initializer.initialize(context);
 	}
 
 	@Test
@@ -88,9 +91,9 @@ public class DelegatingApplicationContextInitializerTests {
 		StaticApplicationContext context = new StaticApplicationContext();
 		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context,
 				"context.initializer.classes=" + NotSuitableInit.class.getName());
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.initializer.initialize(context))
-				.withMessageContaining("generic parameter");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("generic parameter");
+		this.initializer.initialize(context);
 	}
 
 	@Order(Ordered.HIGHEST_PRECEDENCE)

@@ -18,7 +18,6 @@ package org.springframework.boot.actuate.endpoint.web;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.regex.Pattern;
 
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -30,8 +29,6 @@ import org.springframework.util.StringUtils;
  * @since 2.0.0
  */
 public final class WebOperationRequestPredicate {
-
-	private static final Pattern PATH_VAR_PATTERN = Pattern.compile("\\{.*?}");
 
 	private final String path;
 
@@ -53,7 +50,7 @@ public final class WebOperationRequestPredicate {
 	public WebOperationRequestPredicate(String path, WebEndpointHttpMethod httpMethod,
 			Collection<String> consumes, Collection<String> produces) {
 		this.path = path;
-		this.canonicalPath = PATH_VAR_PATTERN.matcher(path).replaceAll("{*}");
+		this.canonicalPath = path.replaceAll("\\{.*?}", "{*}");
 		this.httpMethod = httpMethod;
 		this.consumes = consumes;
 		this.produces = produces;
@@ -92,20 +89,18 @@ public final class WebOperationRequestPredicate {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
+	public String toString() {
+		StringBuilder result = new StringBuilder(
+				this.httpMethod + " to path '" + this.path + "'");
+		if (!CollectionUtils.isEmpty(this.consumes)) {
+			result.append(" consumes: "
+					+ StringUtils.collectionToCommaDelimitedString(this.consumes));
 		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
+		if (!CollectionUtils.isEmpty(this.produces)) {
+			result.append(" produces: "
+					+ StringUtils.collectionToCommaDelimitedString(this.produces));
 		}
-		WebOperationRequestPredicate other = (WebOperationRequestPredicate) obj;
-		boolean result = true;
-		result = result && this.consumes.equals(other.consumes);
-		result = result && this.httpMethod == other.httpMethod;
-		result = result && this.canonicalPath.equals(other.canonicalPath);
-		result = result && this.produces.equals(other.produces);
-		return result;
+		return result.toString();
 	}
 
 	@Override
@@ -120,18 +115,20 @@ public final class WebOperationRequestPredicate {
 	}
 
 	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder(
-				this.httpMethod + " to path '" + this.path + "'");
-		if (!CollectionUtils.isEmpty(this.consumes)) {
-			result.append(" consumes: "
-					+ StringUtils.collectionToCommaDelimitedString(this.consumes));
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
 		}
-		if (!CollectionUtils.isEmpty(this.produces)) {
-			result.append(" produces: "
-					+ StringUtils.collectionToCommaDelimitedString(this.produces));
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
 		}
-		return result.toString();
+		WebOperationRequestPredicate other = (WebOperationRequestPredicate) obj;
+		boolean result = true;
+		result = result && this.consumes.equals(other.consumes);
+		result = result && this.httpMethod == other.httpMethod;
+		result = result && this.canonicalPath.equals(other.canonicalPath);
+		result = result && this.produces.equals(other.produces);
+		return result;
 	}
 
 }

@@ -54,7 +54,10 @@ public class LiquibaseServiceLocatorApplicationListener
 		public void replaceServiceLocator() {
 			CustomResolverServiceLocator customResolverServiceLocator = new CustomResolverServiceLocator(
 					new SpringPackageScanClassResolver(logger));
+			customResolverServiceLocator.addPackageToScan(
+					CommonsLoggingLiquibaseLogger.class.getPackage().getName());
 			ServiceLocator.setInstance(customResolverServiceLocator);
+			liquibase.logging.LogFactory.reset();
 		}
 
 	}

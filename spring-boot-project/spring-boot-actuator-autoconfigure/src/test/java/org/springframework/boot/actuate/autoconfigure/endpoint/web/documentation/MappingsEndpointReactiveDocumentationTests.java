@@ -45,7 +45,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.restdocs.payload.PayloadDocumentation.beneathPath;
@@ -53,8 +55,6 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.webtestclient.WebTestClientRestDocumentation.document;
 import static org.springframework.restdocs.webtestclient.WebTestClientRestDocumentation.documentationConfiguration;
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 /**
  * Tests for generating documentation describing {@link MappingsEndpoint}.
@@ -191,7 +191,8 @@ public class MappingsEndpointReactiveDocumentationTests
 
 		@Bean
 		public RouterFunction<ServerResponse> exampleRouter() {
-			return route(GET("/foo"), (request) -> ServerResponse.ok().build());
+			return RouterFunctions.route(RequestPredicates.GET("/foo"),
+					(request) -> ServerResponse.ok().build());
 		}
 
 		@Bean

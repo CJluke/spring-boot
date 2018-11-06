@@ -47,7 +47,7 @@ public class ReactiveWebServerFactoryAutoConfigurationTests {
 
 	@Test
 	public void createFromConfigClass() {
-		this.contextRunner.withUserConfiguration(MockWebServerConfiguration.class,
+		this.contextRunner.withUserConfiguration(MockWebServerAutoConfiguration.class,
 				HttpHandlerConfiguration.class).run((context) -> {
 					assertThat(context.getBeansOfType(ReactiveWebServerFactory.class))
 							.hasSize(1);
@@ -61,7 +61,7 @@ public class ReactiveWebServerFactoryAutoConfigurationTests {
 
 	@Test
 	public void missingHttpHandler() {
-		this.contextRunner.withUserConfiguration(MockWebServerConfiguration.class)
+		this.contextRunner.withUserConfiguration(MockWebServerAutoConfiguration.class)
 				.run((context) -> assertThat(context.getStartupFailure())
 						.isInstanceOf(ApplicationContextException.class)
 						.hasMessageContaining("missing HttpHandler bean"));
@@ -70,7 +70,7 @@ public class ReactiveWebServerFactoryAutoConfigurationTests {
 	@Test
 	public void multipleHttpHandler() {
 		this.contextRunner
-				.withUserConfiguration(MockWebServerConfiguration.class,
+				.withUserConfiguration(MockWebServerAutoConfiguration.class,
 						HttpHandlerConfiguration.class, TooManyHttpHandlers.class)
 				.run((context) -> assertThat(context.getStartupFailure())
 						.isInstanceOf(ApplicationContextException.class)
@@ -80,7 +80,7 @@ public class ReactiveWebServerFactoryAutoConfigurationTests {
 
 	@Test
 	public void customizeReactiveWebServer() {
-		this.contextRunner.withUserConfiguration(MockWebServerConfiguration.class,
+		this.contextRunner.withUserConfiguration(MockWebServerAutoConfiguration.class,
 				HttpHandlerConfiguration.class, ReactiveWebServerCustomization.class)
 				.run((context) -> assertThat(
 						context.getBean(MockReactiveWebServerFactory.class).getPort())
@@ -128,7 +128,7 @@ public class ReactiveWebServerFactoryAutoConfigurationTests {
 	}
 
 	@Configuration
-	public static class MockWebServerConfiguration {
+	public static class MockWebServerAutoConfiguration {
 
 		@Bean
 		public MockReactiveWebServerFactory mockReactiveWebServerFactory() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.boot.web.servlet.filter;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.core.Ordered;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 
@@ -26,12 +27,13 @@ import org.springframework.web.filter.HiddenHttpMethodFilter;
  * @since 2.0.0
  */
 public class OrderedHiddenHttpMethodFilter extends HiddenHttpMethodFilter
-		implements OrderedFilter {
+		implements Ordered {
 
 	/**
 	 * The default order is high to ensure the filter is applied before Spring Security.
 	 */
-	public static final int DEFAULT_ORDER = REQUEST_WRAPPER_FILTER_MAX_ORDER - 10000;
+	public static final int DEFAULT_ORDER = FilterRegistrationBean.REQUEST_WRAPPER_FILTER_MAX_ORDER
+			- 10000;
 
 	private int order = DEFAULT_ORDER;
 

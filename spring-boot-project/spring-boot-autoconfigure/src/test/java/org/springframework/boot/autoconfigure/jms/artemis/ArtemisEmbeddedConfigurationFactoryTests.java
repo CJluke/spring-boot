@@ -96,5 +96,4 @@ public class ArtemisEmbeddedConfigurationFactoryTests {
 				.getAddressConfigurations();
 		assertThat(addressConfigurations).hasSize(2);
 	}
-
 }

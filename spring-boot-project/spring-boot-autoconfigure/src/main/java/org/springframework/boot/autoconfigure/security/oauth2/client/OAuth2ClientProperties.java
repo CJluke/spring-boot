@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Madhura Bhave
  * @author Phillip Webb
- * @author Artsiom Yudovin
- * @author MyeongHyeon Lee
  */
 @ConfigurationProperties(prefix = "spring.security.oauth2.client")
 public class OAuth2ClientProperties {
@@ -63,6 +61,9 @@ public class OAuth2ClientProperties {
 		if (!StringUtils.hasText(registration.getClientId())) {
 			throw new IllegalStateException("Client id must not be empty.");
 		}
+		if (!StringUtils.hasText(registration.getClientSecret())) {
+			throw new IllegalStateException("Client secret must not be empty.");
+		}
 	}
 
 	/**
@@ -88,28 +89,28 @@ public class OAuth2ClientProperties {
 		private String clientSecret;
 
 		/**
-		 * Client authentication method. May be left blank when using a pre-defined
+		 * Client authentication method. May be left blank then using a pre-defined
 		 * provider.
 		 */
 		private String clientAuthenticationMethod;
 
 		/**
-		 * Authorization grant type. May be left blank when using a pre-defined provider.
+		 * Authorization grant type. May be left blank then using a pre-defined provider.
 		 */
 		private String authorizationGrantType;
 
 		/**
-		 * Redirect URI. May be left blank when using a pre-defined provider.
+		 * Redirect URI. May be left blank then using a pre-defined provider.
 		 */
-		private String redirectUri;
+		private String redirectUriTemplate;
 
 		/**
-		 * Authorization scopes. May be left blank when using a pre-defined provider.
+		 * Authorization scopes. May be left blank then using a pre-defined provider.
 		 */
 		private Set<String> scope;
 
 		/**
-		 * Client name. May be left blank when using a pre-defined provider.
+		 * Client name. May be left blank then using a pre-defined provider.
 		 */
 		private String clientName;
 
@@ -153,22 +154,12 @@ public class OAuth2ClientProperties {
 			this.authorizationGrantType = authorizationGrantType;
 		}
 
-		public String getRedirectUri() {
-			return this.redirectUri;
-		}
-
-		public void setRedirectUri(String redirectUri) {
-			this.redirectUri = redirectUri;
-		}
-
-		@Deprecated
 		public String getRedirectUriTemplate() {
-			return getRedirectUri();
+			return this.redirectUriTemplate;
 		}
 
-		@Deprecated
-		public void setRedirectUriTemplate(String redirectUri) {
-			setRedirectUri(redirectUri);
+		public void setRedirectUriTemplate(String redirectUriTemplate) {
+			this.redirectUriTemplate = redirectUriTemplate;
 		}
 
 		public Set<String> getScope() {
@@ -207,11 +198,6 @@ public class OAuth2ClientProperties {
 		private String userInfoUri;
 
 		/**
-		 * User info authentication method for the provider.
-		 */
-		private String userInfoAuthenticationMethod;
-
-		/**
 		 * Name of the attribute that will be used to extract the username from the call
 		 * to 'userInfoUri'.
 		 */
@@ -221,11 +207,6 @@ public class OAuth2ClientProperties {
 		 * JWK set URI for the provider.
 		 */
 		private String jwkSetUri;
-
-		/**
-		 * URI that an OpenID Connect Provider asserts as its Issuer Identifier.
-		 */
-		private String issuerUri;
 
 		public String getAuthorizationUri() {
 			return this.authorizationUri;
@@ -251,14 +232,6 @@ public class OAuth2ClientProperties {
 			this.userInfoUri = userInfoUri;
 		}
 
-		public String getUserInfoAuthenticationMethod() {
-			return this.userInfoAuthenticationMethod;
-		}
-
-		public void setUserInfoAuthenticationMethod(String userInfoAuthenticationMethod) {
-			this.userInfoAuthenticationMethod = userInfoAuthenticationMethod;
-		}
-
 		public String getUserNameAttribute() {
 			return this.userNameAttribute;
 		}
@@ -273,14 +246,6 @@ public class OAuth2ClientProperties {
 
 		public void setJwkSetUri(String jwkSetUri) {
 			this.jwkSetUri = jwkSetUri;
-		}
-
-		public String getIssuerUri() {
-			return this.issuerUri;
-		}
-
-		public void setIssuerUri(String issuerUri) {
-			this.issuerUri = issuerUri;
 		}
 
 	}

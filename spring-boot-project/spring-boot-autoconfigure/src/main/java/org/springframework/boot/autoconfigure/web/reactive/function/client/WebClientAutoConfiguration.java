@@ -16,6 +16,7 @@
 
 package org.springframework.boot.autoconfigure.web.reactive.function.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -30,7 +31,9 @@ import org.springframework.boot.web.reactive.function.client.WebClientCustomizer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.Order;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -46,17 +49,21 @@ import org.springframework.web.reactive.function.client.WebClient;
  */
 @Configuration
 @ConditionalOnClass(WebClient.class)
-@AutoConfigureAfter({ CodecsAutoConfiguration.class,
-		ClientHttpConnectorAutoConfiguration.class })
+@AutoConfigureAfter(CodecsAutoConfiguration.class)
 public class WebClientAutoConfiguration {
 
 	private final WebClient.Builder webClientBuilder;
 
 	public WebClientAutoConfiguration(
-			ObjectProvider<WebClientCustomizer> customizerProvider) {
+			ObjectProvider<List<WebClientCustomizer>> customizerProvider) {
 		this.webClientBuilder = WebClient.builder();
-		customizerProvider.orderedStream()
-				.forEach((customizer) -> customizer.customize(this.webClientBuilder));
+		List<WebClientCustomizer> customizers = customizerProvider.getIfAvailable();
+		if (!CollectionUtils.isEmpty(customizers)) {
+			customizers = new ArrayList<>(customizers);
+			AnnotationAwareOrderComparator.sort(customizers);
+			customizers
+					.forEach((customizer) -> customizer.customize(this.webClientBuilder));
+		}
 	}
 
 	@Bean

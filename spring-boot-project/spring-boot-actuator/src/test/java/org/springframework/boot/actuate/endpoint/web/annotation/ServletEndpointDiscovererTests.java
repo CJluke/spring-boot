@@ -29,131 +29,109 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.ExposableEndpoint;
 import org.springframework.boot.actuate.endpoint.annotation.DiscoveredEndpoint;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.EndpointServlet;
 import org.springframework.boot.actuate.endpoint.web.ExposableServletEndpoint;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
-import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.boot.test.context.runner.ContextConsumer;
+import org.springframework.boot.actuate.endpoint.web.PathMapper;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.validation.annotation.Validated;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Tests for {@link ServletEndpointDiscoverer}.
  *
  * @author Phillip Webb
- * @author Stephane Nicoll
  */
 public class ServletEndpointDiscovererTests {
 
-	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner();
+	@Rule
+	public final ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void getEndpointsWhenNoEndpointBeansShouldReturnEmptyCollection() {
-		this.contextRunner.withUserConfiguration(EmptyConfiguration.class)
-				.run(assertDiscoverer(
-						(discoverer) -> assertThat(discoverer.getEndpoints()).isEmpty()));
+		load(EmptyConfiguration.class,
+				(discoverer) -> assertThat(discoverer.getEndpoints()).isEmpty());
 	}
 
 	@Test
 	public void getEndpointsShouldIncludeServletEndpoints() {
-		this.contextRunner.withUserConfiguration(TestServletEndpoint.class)
-				.run(assertDiscoverer((discoverer) -> {
-					Collection<ExposableServletEndpoint> endpoints = discoverer
-							.getEndpoints();
-					assertThat(endpoints).hasSize(1);
-					ExposableServletEndpoint endpoint = endpoints.iterator().next();
-					assertThat(endpoint.getEndpointId())
-							.isEqualTo(EndpointId.of("testservlet"));
-					assertThat(endpoint.getEndpointServlet()).isNotNull();
-					assertThat(endpoint).isInstanceOf(DiscoveredEndpoint.class);
-				}));
-	}
-
-	@Test
-	public void getEndpointsShouldDiscoverProxyServletEndpoints() {
-		this.contextRunner.withUserConfiguration(TestProxyServletEndpoint.class)
-				.withConfiguration(
-						AutoConfigurations.of(ValidationAutoConfiguration.class))
-				.run(assertDiscoverer((discoverer) -> {
-					Collection<ExposableServletEndpoint> endpoints = discoverer
-							.getEndpoints();
-					assertThat(endpoints).hasSize(1);
-					ExposableServletEndpoint endpoint = endpoints.iterator().next();
-					assertThat(endpoint.getEndpointId())
-							.isEqualTo(EndpointId.of("testservlet"));
-					assertThat(endpoint.getEndpointServlet()).isNotNull();
-					assertThat(endpoint).isInstanceOf(DiscoveredEndpoint.class);
-				}));
+		load(TestServletEndpoint.class, (discoverer) -> {
+			Collection<ExposableServletEndpoint> endpoints = discoverer.getEndpoints();
+			assertThat(endpoints).hasSize(1);
+			ExposableServletEndpoint endpoint = endpoints.iterator().next();
+			assertThat(endpoint.getId()).isEqualTo("testservlet");
+			assertThat(endpoint.getEndpointServlet()).isNotNull();
+			assertThat(endpoint).isInstanceOf(DiscoveredEndpoint.class);
+		});
 	}
 
 	@Test
 	public void getEndpointsShouldNotDiscoverRegularEndpoints() {
-		this.contextRunner.withUserConfiguration(WithRegularEndpointConfiguration.class)
-				.run(assertDiscoverer((discoverer) -> {
-					Collection<ExposableServletEndpoint> endpoints = discoverer
-							.getEndpoints();
-					List<EndpointId> ids = endpoints.stream()
-							.map(ExposableEndpoint::getEndpointId)
-							.collect(Collectors.toList());
-					assertThat(ids).containsOnly(EndpointId.of("testservlet"));
-				}));
+		load(WithRegularEndpointConfiguration.class, (discoverer) -> {
+			Collection<ExposableServletEndpoint> endpoints = discoverer.getEndpoints();
+			List<String> ids = endpoints.stream().map(ExposableEndpoint::getId)
+					.collect(Collectors.toList());
+			assertThat(ids).containsOnly("testservlet");
+		});
 	}
 
 	@Test
 	public void getEndpointWhenEndpointHasOperationsShouldThrowException() {
-		this.contextRunner.withUserConfiguration(TestServletEndpointWithOperation.class)
-				.run(assertDiscoverer((discoverer) -> assertThatExceptionOfType(
-						IllegalStateException.class).isThrownBy(discoverer::getEndpoints)
-								.withMessageContaining(
-										"ServletEndpoints must not declare operations")));
+		load(TestServletEndpointWithOperation.class, (discoverer) -> {
+			this.thrown.expect(IllegalStateException.class);
+			this.thrown.expectMessage("ServletEndpoints must not declare operations");
+			discoverer.getEndpoints();
+		});
 	}
 
 	@Test
 	public void getEndpointWhenEndpointNotASupplierShouldThrowException() {
-		this.contextRunner.withUserConfiguration(TestServletEndpointNotASupplier.class)
-				.run(assertDiscoverer((discoverer) -> assertThatExceptionOfType(
-						IllegalStateException.class).isThrownBy(discoverer::getEndpoints)
-								.withMessageContaining("must be a supplier")));
+		load(TestServletEndpointNotASupplier.class, (discoverer) -> {
+			this.thrown.expect(IllegalStateException.class);
+			this.thrown.expectMessage("must be a supplier");
+			discoverer.getEndpoints();
+		});
 	}
 
 	@Test
 	public void getEndpointWhenEndpointSuppliesWrongTypeShouldThrowException() {
-		this.contextRunner
-				.withUserConfiguration(TestServletEndpointSupplierOfWrongType.class)
-				.run(assertDiscoverer((discoverer) -> assertThatExceptionOfType(
-						IllegalStateException.class).isThrownBy(discoverer::getEndpoints)
-								.withMessageContaining(
-										"must supply an EndpointServlet")));
+		load(TestServletEndpointSupplierOfWrongType.class, (discoverer) -> {
+			this.thrown.expect(IllegalStateException.class);
+			this.thrown.expectMessage("must supply an EndpointServlet");
+			discoverer.getEndpoints();
+		});
 	}
 
 	@Test
 	public void getEndpointWhenEndpointSuppliesNullShouldThrowException() {
-		this.contextRunner.withUserConfiguration(TestServletEndpointSupplierOfNull.class)
-				.run(assertDiscoverer((discoverer) -> assertThatExceptionOfType(
-						IllegalStateException.class).isThrownBy(discoverer::getEndpoints)
-								.withMessageContaining("must not supply null")));
+		load(TestServletEndpointSupplierOfNull.class, (discoverer) -> {
+			this.thrown.expect(IllegalStateException.class);
+			this.thrown.expectMessage("must not supply null");
+			discoverer.getEndpoints();
+		});
 	}
 
-	private ContextConsumer<AssertableApplicationContext> assertDiscoverer(
+	private void load(Class<?> configuration,
 			Consumer<ServletEndpointDiscoverer> consumer) {
-		return (context) -> {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				configuration);
+		try {
 			ServletEndpointDiscoverer discoverer = new ServletEndpointDiscoverer(context,
-					null, Collections.emptyList());
+					PathMapper.useEndpointId(), Collections.emptyList());
 			consumer.accept(discoverer);
-		};
+		}
+		finally {
+			context.close();
+		}
 	}
 
 	@Configuration
@@ -169,17 +147,6 @@ public class ServletEndpointDiscovererTests {
 
 	@ServletEndpoint(id = "testservlet")
 	static class TestServletEndpoint implements Supplier<EndpointServlet> {
-
-		@Override
-		public EndpointServlet get() {
-			return new EndpointServlet(TestServlet.class);
-		}
-
-	}
-
-	@ServletEndpoint(id = "testservlet")
-	@Validated
-	static class TestProxyServletEndpoint implements Supplier<EndpointServlet> {
 
 		@Override
 		public EndpointServlet get() {

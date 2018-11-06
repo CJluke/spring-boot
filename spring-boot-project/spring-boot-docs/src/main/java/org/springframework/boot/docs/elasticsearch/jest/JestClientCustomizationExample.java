@@ -42,5 +42,4 @@ public class JestClientCustomizationExample {
 
 	}
 	// end::customizer[]
-
 }

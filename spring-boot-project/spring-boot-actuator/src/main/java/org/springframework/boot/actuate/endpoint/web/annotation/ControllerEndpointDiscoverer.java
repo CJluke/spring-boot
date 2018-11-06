@@ -18,10 +18,8 @@ package org.springframework.boot.actuate.endpoint.web.annotation;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import org.springframework.boot.actuate.endpoint.EndpointFilter;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.Operation;
 import org.springframework.boot.actuate.endpoint.annotation.DiscoveredOperationMethod;
 import org.springframework.boot.actuate.endpoint.annotation.EndpointDiscoverer;
@@ -30,7 +28,7 @@ import org.springframework.boot.actuate.endpoint.invoke.ParameterValueMapper;
 import org.springframework.boot.actuate.endpoint.web.PathMapper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.util.ClassUtils;
+import org.springframework.util.Assert;
 
 /**
  * {@link EndpointDiscoverer} for {@link ExposableControllerEndpoint controller
@@ -43,39 +41,40 @@ public class ControllerEndpointDiscoverer
 		extends EndpointDiscoverer<ExposableControllerEndpoint, Operation>
 		implements ControllerEndpointsSupplier {
 
-	private final List<PathMapper> endpointPathMappers;
+	private final PathMapper endpointPathMapper;
 
 	/**
 	 * Create a new {@link ControllerEndpointDiscoverer} instance.
 	 * @param applicationContext the source application context
-	 * @param endpointPathMappers the endpoint path mappers
+	 * @param endpointPathMapper the endpoint path mapper
 	 * @param filters filters to apply
 	 */
 	public ControllerEndpointDiscoverer(ApplicationContext applicationContext,
-			List<PathMapper> endpointPathMappers,
+			PathMapper endpointPathMapper,
 			Collection<EndpointFilter<ExposableControllerEndpoint>> filters) {
 		super(applicationContext, ParameterValueMapper.NONE, Collections.emptyList(),
 				filters);
-		this.endpointPathMappers = endpointPathMappers;
+		Assert.notNull(endpointPathMapper, "EndpointPathMapper must not be null");
+		this.endpointPathMapper = endpointPathMapper;
 	}
 
 	@Override
 	protected boolean isEndpointExposed(Object endpointBean) {
-		Class<?> type = ClassUtils.getUserClass(endpointBean.getClass());
+		Class<?> type = endpointBean.getClass();
 		return AnnotatedElementUtils.isAnnotated(type, ControllerEndpoint.class)
 				|| AnnotatedElementUtils.isAnnotated(type, RestControllerEndpoint.class);
 	}
 
 	@Override
-	protected ExposableControllerEndpoint createEndpoint(Object endpointBean,
-			EndpointId id, boolean enabledByDefault, Collection<Operation> operations) {
-		String rootPath = PathMapper.getRootPath(this.endpointPathMappers, id);
+	protected ExposableControllerEndpoint createEndpoint(Object endpointBean, String id,
+			boolean enabledByDefault, Collection<Operation> operations) {
+		String rootPath = this.endpointPathMapper.getRootPath(id);
 		return new DiscoveredControllerEndpoint(this, endpointBean, id, rootPath,
 				enabledByDefault);
 	}
 
 	@Override
-	protected Operation createOperation(EndpointId endpointId,
+	protected Operation createOperation(String endpointId,
 			DiscoveredOperationMethod operationMethod, OperationInvoker invoker) {
 		throw new IllegalStateException(
 				"ControllerEndpoints must not declare operations");

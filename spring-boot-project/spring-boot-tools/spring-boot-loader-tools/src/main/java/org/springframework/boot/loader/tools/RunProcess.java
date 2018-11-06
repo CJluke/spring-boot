@@ -20,8 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Utility used to run a process.
@@ -30,7 +28,6 @@ import java.util.Map;
  * @author Dave Syer
  * @author Andy Wilkinson
  * @author Stephane Nicoll
- * @author Dmytro Nosan
  * @since 1.1.0
  */
 public class RunProcess {
@@ -66,15 +63,14 @@ public class RunProcess {
 	}
 
 	public int run(boolean waitForProcess, String... args) throws IOException {
-		return run(waitForProcess, Arrays.asList(args), Collections.emptyMap());
+		return run(waitForProcess, Arrays.asList(args));
 	}
 
-	public int run(boolean waitForProcess, Collection<String> args,
-			Map<String, String> environmentVariables) throws IOException {
+	protected int run(boolean waitForProcess, Collection<String> args)
+			throws IOException {
 		ProcessBuilder builder = new ProcessBuilder(this.command);
 		builder.directory(this.workingDirectory);
 		builder.command().addAll(args);
-		builder.environment().putAll(environmentVariables);
 		builder.redirectErrorStream(true);
 		builder.inheritIO();
 		try {

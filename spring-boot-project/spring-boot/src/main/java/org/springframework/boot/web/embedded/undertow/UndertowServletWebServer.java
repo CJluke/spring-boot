@@ -255,8 +255,8 @@ public class UndertowServletWebServer implements WebServer {
 	private Port getPortFromChannel(BoundChannel channel) {
 		SocketAddress socketAddress = channel.getLocalAddress();
 		if (socketAddress instanceof InetSocketAddress) {
-			String protocol = (ReflectionUtils.findField(channel.getClass(),
-					"ssl") != null) ? "https" : "http";
+			String protocol = ReflectionUtils.findField(channel.getClass(), "ssl") != null
+					? "https" : "http";
 			return new Port(((InetSocketAddress) socketAddress).getPort(), protocol);
 		}
 		return null;
@@ -304,7 +304,6 @@ public class UndertowServletWebServer implements WebServer {
 			this.started = false;
 			try {
 				this.manager.stop();
-				this.manager.undeploy();
 				this.undertow.stop();
 			}
 			catch (Exception ex) {
@@ -341,6 +340,16 @@ public class UndertowServletWebServer implements WebServer {
 		}
 
 		@Override
+		public String toString() {
+			return this.number + " (" + this.protocol + ")";
+		}
+
+		@Override
+		public int hashCode() {
+			return this.number;
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
@@ -356,16 +365,6 @@ public class UndertowServletWebServer implements WebServer {
 				return false;
 			}
 			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return this.number;
-		}
-
-		@Override
-		public String toString() {
-			return this.number + " (" + this.protocol + ")";
 		}
 
 	}

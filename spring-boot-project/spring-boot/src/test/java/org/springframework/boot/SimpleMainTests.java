@@ -41,7 +41,7 @@ public class SimpleMainTests {
 	@Rule
 	public OutputCapture outputCapture = new OutputCapture();
 
-	private static final String SPRING_STARTUP = "Started SpringApplication in";
+	private static final String SPRING_STARTUP = "root of context hierarchy";
 
 	@Test(expected = IllegalArgumentException.class)
 	public void emptyApplicationContext() throws Exception {
@@ -76,10 +76,9 @@ public class SimpleMainTests {
 	}
 
 	private String[] getArgs(String... args) {
-		List<String> list = new ArrayList<>(
-				Arrays.asList("--spring.main.web-application-type=none",
-						"--spring.main.show-banner=OFF",
-						"--spring.main.register-shutdownHook=false"));
+		List<String> list = new ArrayList<>(Arrays.asList(
+				"--spring.main.webEnvironment=false", "--spring.main.showBanner=OFF",
+				"--spring.main.registerShutdownHook=false"));
 		if (args.length > 0) {
 			list.add("--spring.main.sources="
 					+ StringUtils.arrayToCommaDelimitedString(args));

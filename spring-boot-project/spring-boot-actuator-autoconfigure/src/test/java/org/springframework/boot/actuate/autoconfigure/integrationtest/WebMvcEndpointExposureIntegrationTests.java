@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import org.springframework.boot.actuate.autoconfigure.endpoint.EndpointAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.health.HealthIndicatorAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.trace.http.HttpTraceAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.web.server.ManagementContextAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.web.servlet.ServletManagementContextAutoConfiguration;
@@ -74,8 +73,7 @@ public class WebMvcEndpointExposureIntegrationTests {
 							ServletManagementContextAutoConfiguration.class,
 							ManagementContextAutoConfiguration.class,
 							ServletManagementContextAutoConfiguration.class,
-							HttpTraceAutoConfiguration.class,
-							HealthIndicatorAutoConfiguration.class))
+							HttpTraceAutoConfiguration.class))
 					.withConfiguration(
 							AutoConfigurations.of(EndpointAutoConfigurationClasses.ALL))
 					.withUserConfiguration(CustomMvcEndpoint.class,

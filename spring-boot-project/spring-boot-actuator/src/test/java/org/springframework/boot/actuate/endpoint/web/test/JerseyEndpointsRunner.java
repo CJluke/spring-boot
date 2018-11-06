@@ -34,6 +34,7 @@ import org.springframework.boot.actuate.endpoint.invoke.convert.ConversionServic
 import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
+import org.springframework.boot.actuate.endpoint.web.PathMapper;
 import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpointDiscoverer;
 import org.springframework.boot.actuate.endpoint.web.jersey.JerseyEndpointResourceFactory;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -101,8 +102,8 @@ class JerseyEndpointsRunner extends AbstractWebEndpointRunner {
 					mediaTypes);
 			WebEndpointDiscoverer discoverer = new WebEndpointDiscoverer(
 					this.applicationContext, new ConversionServiceParameterValueMapper(),
-					endpointMediaTypes, null, Collections.emptyList(),
-					Collections.emptyList());
+					endpointMediaTypes, PathMapper.useEndpointId(),
+					Collections.emptyList(), Collections.emptyList());
 			Collection<Resource> resources = new JerseyEndpointResourceFactory()
 					.createEndpointResources(new EndpointMapping("/actuator"),
 							discoverer.getEndpoints(), endpointMediaTypes,

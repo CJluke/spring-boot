@@ -73,8 +73,9 @@ public class TestDatabaseAutoConfigurationTests {
 
 		@Bean
 		public DataSource dataSource() {
-			return new EmbeddedDatabaseBuilder().generateUniqueName(true)
-					.setType(EmbeddedDatabaseType.HSQL).build();
+			EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder()
+					.generateUniqueName(true).setType(EmbeddedDatabaseType.HSQL);
+			return builder.build();
 		}
 
 	}

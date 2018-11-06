@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Tests for {@link Frame}.
@@ -33,17 +33,21 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
  */
 public class FrameTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void payloadMustNotBeNull() {
-		assertThatIllegalArgumentException().isThrownBy(() -> new Frame((String) null))
-				.withMessageContaining("Payload must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Payload must not be null");
+		new Frame((String) null);
 	}
 
 	@Test
 	public void typeMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new Frame((Frame.Type) null))
-				.withMessageContaining("Type must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Type must not be null");
+		new Frame((Frame.Type) null);
 	}
 
 	@Test
@@ -88,17 +92,17 @@ public class FrameTests {
 	@Test
 	public void readFragmentedNotSupported() throws Exception {
 		byte[] bytes = new byte[] { 0x0F };
-		assertThatIllegalStateException()
-				.isThrownBy(() -> Frame.read(newConnectionInputStream(bytes)))
-				.withMessageContaining("Fragmented frames are not supported");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Fragmented frames are not supported");
+		Frame.read(newConnectionInputStream(bytes));
 	}
 
 	@Test
 	public void readLargeFramesNotSupported() throws Exception {
 		byte[] bytes = new byte[] { (byte) 0x80, (byte) 0xFF };
-		assertThatIllegalStateException()
-				.isThrownBy(() -> Frame.read(newConnectionInputStream(bytes)))
-				.withMessageContaining("Large frames are not supported");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Large frames are not supported");
+		Frame.read(newConnectionInputStream(bytes));
 	}
 
 	@Test

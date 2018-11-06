@@ -63,7 +63,7 @@
     <requirement
         name="AnyEditTools.feature.group"/>
     <requirement
-        name="io.spring.javaformat.eclipse.feature.feature.group"/>
+        name="org.eclipse.m2e.maveneclipse.feature.feature.group"/>
     <requirement
         name="org.eclipse.jst.server_adapters.feature.feature.group"/>
     <requirement
@@ -87,7 +87,7 @@
     <repository
         url="http://andrei.gmxhome.de/eclipse/"/>
     <repository
-        url="https://dl.bintray.com/spring/javaformat-eclipse/"/>
+        url="https://dl.bintray.com/philwebb/m2eclipse-maveneclipse"/>
     <repository
         url="http://download.eclipse.org/egit/github/updates/"/>
     <repository

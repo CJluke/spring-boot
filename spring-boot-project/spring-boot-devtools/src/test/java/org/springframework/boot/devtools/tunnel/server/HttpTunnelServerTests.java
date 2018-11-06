@@ -28,7 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -44,7 +46,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -64,6 +65,9 @@ public class HttpTunnelServerTests {
 	private static final byte[] NO_DATA = {};
 
 	private static final String SEQ_HEADER = "x-seq";
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private HttpTunnelServer server;
 
@@ -99,8 +103,9 @@ public class HttpTunnelServerTests {
 
 	@Test
 	public void serverConnectionIsRequired() {
-		assertThatIllegalArgumentException().isThrownBy(() -> new HttpTunnelServer(null))
-				.withMessageContaining("ServerConnection must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("ServerConnection must not be null");
+		new HttpTunnelServer(null);
 	}
 
 	@Test
@@ -119,9 +124,9 @@ public class HttpTunnelServerTests {
 
 	@Test
 	public void longPollTimeoutMustBePositiveValue() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.server.setLongPollTimeout(0))
-				.withMessageContaining("LongPollTimeout must be a positive value");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("LongPollTimeout must be a positive value");
+		this.server.setLongPollTimeout(0);
 	}
 
 	@Test
@@ -252,9 +257,9 @@ public class HttpTunnelServerTests {
 
 	@Test
 	public void disconnectTimeoutMustBePositive() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.server.setDisconnectTimeout(0))
-				.withMessageContaining("DisconnectTimeout must be a positive value");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("DisconnectTimeout must be a positive value");
+		this.server.setDisconnectTimeout(0);
 	}
 
 	@Test

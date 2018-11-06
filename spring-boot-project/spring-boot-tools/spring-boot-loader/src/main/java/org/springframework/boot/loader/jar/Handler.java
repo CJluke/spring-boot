@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ public class Handler extends URLStreamHandler {
 
 	@Override
 	protected URLConnection openConnection(URL url) throws IOException {
-		if (this.jarFile != null && isUrlInJarFile(url, this.jarFile)) {
+		if (this.jarFile != null
+				&& url.toString().startsWith(this.jarFile.getUrl().toString())) {
 			return JarURLConnection.get(url, this.jarFile);
 		}
 		try {
@@ -101,13 +102,6 @@ public class Handler extends URLStreamHandler {
 		catch (Exception ex) {
 			return openFallbackConnection(url, ex);
 		}
-	}
-
-	private boolean isUrlInJarFile(URL url, JarFile jarFile)
-			throws MalformedURLException {
-		// Try the path first to save building a new url string each time
-		return url.getPath().startsWith(jarFile.getUrl().getPath())
-				&& url.toString().startsWith(jarFile.getUrlString());
 	}
 
 	private URLConnection openFallbackConnection(URL url, Exception reason)
@@ -130,8 +124,8 @@ public class Handler extends URLStreamHandler {
 
 	private void log(boolean warning, String message, Exception cause) {
 		try {
-			Level level = warning ? Level.WARNING : Level.FINEST;
-			Logger.getLogger(getClass().getName()).log(level, message, cause);
+			Logger.getLogger(getClass().getName())
+					.log((warning ? Level.WARNING : Level.FINEST), message, cause);
 		}
 		catch (Exception ex) {
 			if (warning) {
@@ -217,15 +211,7 @@ public class Handler extends URLStreamHandler {
 	}
 
 	private void setFile(URL context, String file) {
-		String path = normalize(file);
-		String query = null;
-		int queryIndex = path.lastIndexOf('?');
-		if (queryIndex != -1) {
-			query = path.substring(queryIndex + 1);
-			path = path.substring(0, queryIndex);
-		}
-		setURL(context, JAR_PROTOCOL, null, -1, null, null, path, query,
-				context.getRef());
+		setURL(context, JAR_PROTOCOL, null, -1, null, null, normalize(file), null, null);
 	}
 
 	private String normalize(String file) {
@@ -264,7 +250,7 @@ public class Handler extends URLStreamHandler {
 	}
 
 	private int hashCode(String protocol, String file) {
-		int result = (protocol != null) ? protocol.hashCode() : 0;
+		int result = (protocol == null ? 0 : protocol.hashCode());
 		int separatorIndex = file.indexOf(SEPARATOR);
 		if (separatorIndex == -1) {
 			return result + file.hashCode();
@@ -333,7 +319,7 @@ public class Handler extends URLStreamHandler {
 			String path = name.substring(FILE_PROTOCOL.length());
 			File file = new File(URLDecoder.decode(path, "UTF-8"));
 			Map<File, JarFile> cache = rootFileCache.get();
-			JarFile result = (cache != null) ? cache.get(file) : null;
+			JarFile result = (cache == null ? null : cache.get(file));
 			if (result == null) {
 				result = new JarFile(file);
 				addToRootFileCache(file, result);

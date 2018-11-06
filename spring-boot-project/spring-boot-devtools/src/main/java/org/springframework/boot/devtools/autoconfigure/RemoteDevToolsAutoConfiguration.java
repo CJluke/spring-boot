@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
-import org.springframework.boot.autoconfigure.web.ServerProperties.Servlet;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.devtools.remote.server.AccessManager;
 import org.springframework.boot.devtools.remote.server.Dispatcher;
@@ -85,11 +84,10 @@ public class RemoteDevToolsAutoConfiguration {
 	@Bean
 	public HandlerMapper remoteDevToolsHealthCheckHandlerMapper() {
 		Handler handler = new HttpStatusHandler();
-		Servlet servlet = this.serverProperties.getServlet();
-		String servletContextPath = (servlet.getContextPath() != null)
-				? servlet.getContextPath() : "";
 		return new UrlHandlerMapper(
-				servletContextPath + this.properties.getRemote().getContextPath(),
+				(this.serverProperties.getServlet().getContextPath() == null ? ""
+						: this.serverProperties.getServlet().getContextPath())
+						+ this.properties.getRemote().getContextPath(),
 				handler);
 	}
 
@@ -104,7 +102,6 @@ public class RemoteDevToolsAutoConfiguration {
 	/**
 	 * Configuration for remote update and restarts.
 	 */
-	@Configuration
 	@ConditionalOnProperty(prefix = "spring.devtools.remote.restart", name = "enabled", matchIfMissing = true)
 	static class RemoteRestartConfiguration {
 
@@ -130,11 +127,9 @@ public class RemoteDevToolsAutoConfiguration {
 		@Bean
 		@ConditionalOnMissingBean(name = "remoteRestartHandlerMapper")
 		public UrlHandlerMapper remoteRestartHandlerMapper(HttpRestartServer server) {
-			Servlet servlet = this.serverProperties.getServlet();
-			RemoteDevToolsProperties remote = this.properties.getRemote();
-			String servletContextPath = (servlet.getContextPath() != null)
-					? servlet.getContextPath() : "";
-			String url = servletContextPath + remote.getContextPath() + "/restart";
+			String url = (this.serverProperties.getServlet().getContextPath() == null ? ""
+					: this.serverProperties.getServlet().getContextPath())
+					+ this.properties.getRemote().getContextPath() + "/restart";
 			logger.warn("Listening for remote restart updates on " + url);
 			Handler handler = new HttpRestartServerHandler(server);
 			return new UrlHandlerMapper(url, handler);

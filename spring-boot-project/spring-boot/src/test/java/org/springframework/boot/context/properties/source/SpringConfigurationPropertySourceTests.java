@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package org.springframework.boot.context.properties.source;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.origin.Origin;
 import org.springframework.boot.origin.OriginLookup;
@@ -27,7 +29,6 @@ import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -38,20 +39,21 @@ import static org.mockito.Mockito.mock;
  */
 public class SpringConfigurationPropertySourceTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void createWhenPropertySourceIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new SpringConfigurationPropertySource(null,
-						mock(PropertyMapper.class), null))
-				.withMessageContaining("PropertySource must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("PropertySource must not be null");
+		new SpringConfigurationPropertySource(null, mock(PropertyMapper.class), null);
 	}
 
 	@Test
 	public void createWhenMapperIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new SpringConfigurationPropertySource(
-						mock(PropertySource.class), null, null))
-				.withMessageContaining("Mapper must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Mapper must not be null");
+		new SpringConfigurationPropertySource(mock(PropertySource.class), null, null);
 	}
 
 	@Test
@@ -111,9 +113,9 @@ public class SpringConfigurationPropertySourceTests {
 
 	@Test
 	public void fromWhenPropertySourceIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> SpringConfigurationPropertySource.from(null))
-				.withMessageContaining("Source must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Source must not be null");
+		SpringConfigurationPropertySource.from(null);
 	}
 
 	@Test
@@ -158,7 +160,7 @@ public class SpringConfigurationPropertySourceTests {
 	}
 
 	/**
-	 * Test {@link PropertySource} that's also an {@link OriginLookup}.
+	 * Test {@link PropertySource} that's also a {@link OriginLookup}.
 	 */
 	private static class OriginCapablePropertySource<T> extends PropertySource<T>
 			implements OriginLookup<String> {

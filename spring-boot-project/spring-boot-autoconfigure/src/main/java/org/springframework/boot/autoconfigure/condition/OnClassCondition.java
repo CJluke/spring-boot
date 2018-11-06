@@ -18,9 +18,17 @@ package org.springframework.boot.autoconfigure.condition;
 
 import java.security.AccessControlException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationImportFilter;
 import org.springframework.boot.autoconfigure.AutoConfigurationMetadata;
 import org.springframework.boot.autoconfigure.condition.ConditionMessage.Style;
@@ -29,8 +37,8 @@ import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 
 /**
  * {@link Condition} and {@link AutoConfigurationImportFilter} that checks for the
@@ -41,10 +49,43 @@ import org.springframework.util.StringUtils;
  * @see ConditionalOnMissingClass
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
-class OnClassCondition extends FilteringSpringBootCondition {
+class OnClassCondition extends SpringBootCondition
+		implements AutoConfigurationImportFilter, BeanFactoryAware, BeanClassLoaderAware {
+
+	private BeanFactory beanFactory;
+
+	private ClassLoader beanClassLoader;
 
 	@Override
-	protected final ConditionOutcome[] getOutcomes(String[] autoConfigurationClasses,
+	public boolean[] match(String[] autoConfigurationClasses,
+			AutoConfigurationMetadata autoConfigurationMetadata) {
+		ConditionEvaluationReport report = getConditionEvaluationReport();
+		ConditionOutcome[] outcomes = getOutcomes(autoConfigurationClasses,
+				autoConfigurationMetadata);
+		boolean[] match = new boolean[outcomes.length];
+		for (int i = 0; i < outcomes.length; i++) {
+			match[i] = (outcomes[i] == null || outcomes[i].isMatch());
+			if (!match[i] && outcomes[i] != null) {
+				logOutcome(autoConfigurationClasses[i], outcomes[i]);
+				if (report != null) {
+					report.recordConditionEvaluation(autoConfigurationClasses[i], this,
+							outcomes[i]);
+				}
+			}
+		}
+		return match;
+	}
+
+	private ConditionEvaluationReport getConditionEvaluationReport() {
+		if (this.beanFactory != null
+				&& this.beanFactory instanceof ConfigurableBeanFactory) {
+			return ConditionEvaluationReport
+					.get((ConfigurableListableBeanFactory) this.beanFactory);
+		}
+		return null;
+	}
+
+	private ConditionOutcome[] getOutcomes(String[] autoConfigurationClasses,
 			AutoConfigurationMetadata autoConfigurationMetadata) {
 		// Split the work and perform half in a background thread. Using a single
 		// additional thread seems to offer the best performance. More threads make
@@ -54,7 +95,7 @@ class OnClassCondition extends FilteringSpringBootCondition {
 				autoConfigurationClasses, 0, split, autoConfigurationMetadata);
 		OutcomesResolver secondHalfResolver = new StandardOutcomesResolver(
 				autoConfigurationClasses, split, autoConfigurationClasses.length,
-				autoConfigurationMetadata, getBeanClassLoader());
+				autoConfigurationMetadata, this.beanClassLoader);
 		ConditionOutcome[] secondHalf = secondHalfResolver.resolveOutcomes();
 		ConditionOutcome[] firstHalf = firstHalfResolver.resolveOutcomes();
 		ConditionOutcome[] outcomes = new ConditionOutcome[autoConfigurationClasses.length];
@@ -67,7 +108,7 @@ class OnClassCondition extends FilteringSpringBootCondition {
 			int start, int end, AutoConfigurationMetadata autoConfigurationMetadata) {
 		OutcomesResolver outcomesResolver = new StandardOutcomesResolver(
 				autoConfigurationClasses, start, end, autoConfigurationMetadata,
-				getBeanClassLoader());
+				this.beanClassLoader);
 		try {
 			return new ThreadedOutcomesResolver(outcomesResolver);
 		}
@@ -83,8 +124,7 @@ class OnClassCondition extends FilteringSpringBootCondition {
 		ConditionMessage matchMessage = ConditionMessage.empty();
 		List<String> onClasses = getCandidates(metadata, ConditionalOnClass.class);
 		if (onClasses != null) {
-			List<String> missing = filter(onClasses, ClassNameFilter.MISSING,
-					classLoader);
+			List<String> missing = getMatches(onClasses, MatchType.MISSING, classLoader);
 			if (!missing.isEmpty()) {
 				return ConditionOutcome
 						.noMatch(ConditionMessage.forCondition(ConditionalOnClass.class)
@@ -93,12 +133,12 @@ class OnClassCondition extends FilteringSpringBootCondition {
 			}
 			matchMessage = matchMessage.andCondition(ConditionalOnClass.class)
 					.found("required class", "required classes").items(Style.QUOTE,
-							filter(onClasses, ClassNameFilter.PRESENT, classLoader));
+							getMatches(onClasses, MatchType.PRESENT, classLoader));
 		}
 		List<String> onMissingClasses = getCandidates(metadata,
 				ConditionalOnMissingClass.class);
 		if (onMissingClasses != null) {
-			List<String> present = filter(onMissingClasses, ClassNameFilter.PRESENT,
+			List<String> present = getMatches(onMissingClasses, MatchType.PRESENT,
 					classLoader);
 			if (!present.isEmpty()) {
 				return ConditionOutcome.noMatch(
@@ -107,9 +147,8 @@ class OnClassCondition extends FilteringSpringBootCondition {
 								.items(Style.QUOTE, present));
 			}
 			matchMessage = matchMessage.andCondition(ConditionalOnMissingClass.class)
-					.didNotFind("unwanted class", "unwanted classes")
-					.items(Style.QUOTE, filter(onMissingClasses, ClassNameFilter.MISSING,
-							classLoader));
+					.didNotFind("unwanted class", "unwanted classes").items(Style.QUOTE,
+							getMatches(onMissingClasses, MatchType.MISSING, classLoader));
 		}
 		return ConditionOutcome.match(matchMessage);
 	}
@@ -119,7 +158,7 @@ class OnClassCondition extends FilteringSpringBootCondition {
 		MultiValueMap<String, Object> attributes = metadata
 				.getAllAnnotationAttributes(annotationType.getName(), true);
 		if (attributes == null) {
-			return null;
+			return Collections.emptyList();
 		}
 		List<String> candidates = new ArrayList<>();
 		addAll(candidates, attributes.get("value"));
@@ -133,6 +172,72 @@ class OnClassCondition extends FilteringSpringBootCondition {
 				Collections.addAll(list, (String[]) item);
 			}
 		}
+	}
+
+	private List<String> getMatches(Collection<String> candidates, MatchType matchType,
+			ClassLoader classLoader) {
+		List<String> matches = new ArrayList<>(candidates.size());
+		for (String candidate : candidates) {
+			if (matchType.matches(candidate, classLoader)) {
+				matches.add(candidate);
+			}
+		}
+		return matches;
+	}
+
+	@Override
+	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+		this.beanFactory = beanFactory;
+	}
+
+	@Override
+	public void setBeanClassLoader(ClassLoader classLoader) {
+		this.beanClassLoader = classLoader;
+	}
+
+	private enum MatchType {
+
+		PRESENT {
+
+			@Override
+			public boolean matches(String className, ClassLoader classLoader) {
+				return isPresent(className, classLoader);
+			}
+
+		},
+
+		MISSING {
+
+			@Override
+			public boolean matches(String className, ClassLoader classLoader) {
+				return !isPresent(className, classLoader);
+			}
+
+		};
+
+		private static boolean isPresent(String className, ClassLoader classLoader) {
+			if (classLoader == null) {
+				classLoader = ClassUtils.getDefaultClassLoader();
+			}
+			try {
+				forName(className, classLoader);
+				return true;
+			}
+			catch (Throwable ex) {
+				return false;
+			}
+		}
+
+		private static Class<?> forName(String className, ClassLoader classLoader)
+				throws ClassNotFoundException {
+			if (classLoader != null) {
+				return classLoader.loadClass(className);
+			}
+			return Class.forName(className);
+		}
+
+		public abstract boolean matches(String className, ClassLoader classLoader);
+
 	}
 
 	private interface OutcomesResolver {
@@ -199,44 +304,28 @@ class OnClassCondition extends FilteringSpringBootCondition {
 			ConditionOutcome[] outcomes = new ConditionOutcome[end - start];
 			for (int i = start; i < end; i++) {
 				String autoConfigurationClass = autoConfigurationClasses[i];
-				if (autoConfigurationClass != null) {
-					String candidates = autoConfigurationMetadata
-							.get(autoConfigurationClass, "ConditionalOnClass");
-					if (candidates != null) {
-						outcomes[i - start] = getOutcome(candidates);
-					}
+				Set<String> candidates = autoConfigurationMetadata
+						.getSet(autoConfigurationClass, "ConditionalOnClass");
+				if (candidates != null) {
+					outcomes[i - start] = getOutcome(candidates);
 				}
 			}
 			return outcomes;
 		}
 
-		private ConditionOutcome getOutcome(String candidates) {
+		private ConditionOutcome getOutcome(Set<String> candidates) {
 			try {
-				if (!candidates.contains(",")) {
-					return getOutcome(candidates, ClassNameFilter.MISSING,
-							this.beanClassLoader);
-				}
-				for (String candidate : StringUtils
-						.commaDelimitedListToStringArray(candidates)) {
-					ConditionOutcome outcome = getOutcome(candidate,
-							ClassNameFilter.MISSING, this.beanClassLoader);
-					if (outcome != null) {
-						return outcome;
-					}
+				List<String> missing = getMatches(candidates, MatchType.MISSING,
+						this.beanClassLoader);
+				if (!missing.isEmpty()) {
+					return ConditionOutcome.noMatch(
+							ConditionMessage.forCondition(ConditionalOnClass.class)
+									.didNotFind("required class", "required classes")
+									.items(Style.QUOTE, missing));
 				}
 			}
 			catch (Exception ex) {
 				// We'll get another chance later
-			}
-			return null;
-		}
-
-		private ConditionOutcome getOutcome(String className,
-				ClassNameFilter classNameFilter, ClassLoader classLoader) {
-			if (classNameFilter.matches(className, classLoader)) {
-				return ConditionOutcome.noMatch(ConditionMessage
-						.forCondition(ConditionalOnClass.class)
-						.didNotFind("required class").items(Style.QUOTE, className));
 			}
 			return null;
 		}

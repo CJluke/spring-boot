@@ -32,7 +32,7 @@ public class NewRelicPropertiesTests extends StepRegistryPropertiesTests {
 	@Override
 	public void defaultValuesAreConsistent() {
 		NewRelicProperties properties = new NewRelicProperties();
-		NewRelicConfig config = (key) -> null;
+		NewRelicConfig config = NewRelicConfig.DEFAULT;
 		assertStepRegistryDefaultValues(properties, config);
 		// apiKey and account are mandatory
 		assertThat(properties.getUri()).isEqualTo(config.uri());

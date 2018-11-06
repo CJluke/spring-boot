@@ -34,7 +34,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.support.BasicAuthenticationInterceptor;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -112,7 +112,7 @@ public class SampleMethodSecurityApplicationTests {
 
 	@Test
 	public void testManagementAuthorizedAccess() {
-		BasicAuthenticationInterceptor basicAuthInterceptor = new BasicAuthenticationInterceptor(
+		BasicAuthorizationInterceptor basicAuthInterceptor = new BasicAuthorizationInterceptor(
 				"admin", "admin");
 		this.restTemplate.getRestTemplate().getInterceptors().add(basicAuthInterceptor);
 		try {

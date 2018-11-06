@@ -19,7 +19,9 @@ package org.springframework.boot.context.properties.source;
 import java.util.Collections;
 import java.util.Iterator;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MapPropertySource;
@@ -29,7 +31,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link SpringConfigurationPropertySources}.
@@ -39,11 +40,14 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  */
 public class SpringConfigurationPropertySourcesTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void createWhenPropertySourcesIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new SpringConfigurationPropertySources(null))
-				.withMessageContaining("Sources must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Sources must not be null");
+		new SpringConfigurationPropertySources(null);
 	}
 
 	@Test
@@ -97,19 +101,6 @@ public class SpringConfigurationPropertySourcesTests {
 		ConfigurationPropertyName name = ConfigurationPropertyName.of("server.port");
 		assertThat(iterator.next().getConfigurationProperty(name).getValue())
 				.isEqualTo("1234");
-		assertThat(iterator.hasNext()).isFalse();
-	}
-
-	@Test
-	public void shouldAdaptSystemEnvironmentPropertySourceWithUnderscoreValue() {
-		MutablePropertySources sources = new MutablePropertySources();
-		sources.addLast(new SystemEnvironmentPropertySource(
-				StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
-				Collections.singletonMap("_", "1234")));
-		Iterator<ConfigurationPropertySource> iterator = new SpringConfigurationPropertySources(
-				sources).iterator();
-		ConfigurationPropertyName name = ConfigurationPropertyName.of("bar");
-		assertThat(iterator.next().getConfigurationProperty(name)).isNull();
 		assertThat(iterator.hasNext()).isFalse();
 	}
 

@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.EndpointsSupplier;
 import org.springframework.util.Assert;
 
@@ -38,7 +37,7 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 
 	private final String basePath;
 
-	private final Map<EndpointId, PathMappedEndpoint> endpoints;
+	private final Map<String, PathMappedEndpoint> endpoints;
 
 	/**
 	 * Create a new {@link PathMappedEndpoints} instance for the given supplier.
@@ -47,7 +46,7 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 	 */
 	public PathMappedEndpoints(String basePath, EndpointsSupplier<?> supplier) {
 		Assert.notNull(supplier, "Supplier must not be null");
-		this.basePath = (basePath != null) ? basePath : "";
+		this.basePath = (basePath == null ? "" : basePath);
 		this.endpoints = getEndpoints(Collections.singleton(supplier));
 	}
 
@@ -59,18 +58,17 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 	public PathMappedEndpoints(String basePath,
 			Collection<EndpointsSupplier<?>> suppliers) {
 		Assert.notNull(suppliers, "Suppliers must not be null");
-		this.basePath = (basePath != null) ? basePath : "";
+		this.basePath = (basePath == null ? "" : basePath);
 		this.endpoints = getEndpoints(suppliers);
 	}
 
-	private Map<EndpointId, PathMappedEndpoint> getEndpoints(
+	private Map<String, PathMappedEndpoint> getEndpoints(
 			Collection<EndpointsSupplier<?>> suppliers) {
-		Map<EndpointId, PathMappedEndpoint> endpoints = new LinkedHashMap<>();
+		Map<String, PathMappedEndpoint> endpoints = new LinkedHashMap<>();
 		suppliers.forEach((supplier) -> {
 			supplier.getEndpoints().forEach((endpoint) -> {
 				if (endpoint instanceof PathMappedEndpoint) {
-					endpoints.put(endpoint.getEndpointId(),
-							(PathMappedEndpoint) endpoint);
+					endpoints.put(endpoint.getId(), (PathMappedEndpoint) endpoint);
 				}
 			});
 		});
@@ -91,9 +89,9 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 	 * @param endpointId the endpoint ID
 	 * @return the root path or {@code null}
 	 */
-	public String getRootPath(EndpointId endpointId) {
+	public String getRootPath(String endpointId) {
 		PathMappedEndpoint endpoint = getEndpoint(endpointId);
-		return (endpoint != null) ? endpoint.getRootPath() : null;
+		return (endpoint == null ? null : endpoint.getRootPath());
 	}
 
 	/**
@@ -102,7 +100,7 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 	 * @param endpointId the endpoint ID
 	 * @return the full path or {@code null}
 	 */
-	public String getPath(EndpointId endpointId) {
+	public String getPath(String endpointId) {
 		return getPath(getEndpoint(endpointId));
 	}
 
@@ -128,7 +126,7 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 	 * @param endpointId the endpoint ID
 	 * @return the path mapped endpoint or {@code null}
 	 */
-	public PathMappedEndpoint getEndpoint(EndpointId endpointId) {
+	public PathMappedEndpoint getEndpoint(String endpointId) {
 		return this.endpoints.get(endpointId);
 	}
 
@@ -146,7 +144,7 @@ public class PathMappedEndpoints implements Iterable<PathMappedEndpoint> {
 	}
 
 	private String getPath(PathMappedEndpoint endpoint) {
-		return (endpoint != null) ? this.basePath + "/" + endpoint.getRootPath() : null;
+		return (endpoint == null ? null : this.basePath + "/" + endpoint.getRootPath());
 	}
 
 	private <T> List<T> asList(Stream<T> stream) {

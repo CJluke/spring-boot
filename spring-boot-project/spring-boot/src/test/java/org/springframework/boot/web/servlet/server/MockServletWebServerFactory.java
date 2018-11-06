@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,17 +50,15 @@ public class MockServletWebServerFactory extends AbstractServletWebServerFactory
 	}
 
 	public ServletContext getServletContext() {
-		return (getWebServer() != null) ? getWebServer().getServletContext() : null;
+		return getWebServer() == null ? null : getWebServer().getServletContext();
 	}
 
 	public RegisteredServlet getRegisteredServlet(int index) {
-		return (getWebServer() != null) ? getWebServer().getRegisteredServlet(index)
-				: null;
+		return getWebServer() == null ? null : getWebServer().getRegisteredServlet(index);
 	}
 
 	public RegisteredFilter getRegisteredFilter(int index) {
-		return (getWebServer() != null) ? getWebServer().getRegisteredFilters(index)
-				: null;
+		return getWebServer() == null ? null : getWebServer().getRegisteredFilters(index);
 	}
 
 	public static class MockServletWebServer

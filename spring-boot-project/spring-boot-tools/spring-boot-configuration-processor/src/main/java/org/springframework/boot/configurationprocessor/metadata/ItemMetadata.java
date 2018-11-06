@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,19 +58,14 @@ public final class ItemMetadata implements Comparable<ItemMetadata> {
 	}
 
 	private String buildName(String prefix, String name) {
-		StringBuilder fullName = new StringBuilder();
-		if (prefix != null) {
-			if (prefix.endsWith(".")) {
-				prefix = prefix.substring(0, prefix.length() - 1);
-			}
-			fullName.append(prefix);
+		while (prefix != null && prefix.endsWith(".")) {
+			prefix = prefix.substring(0, prefix.length() - 1);
 		}
-		if (name != null) {
-			if (fullName.length() > 0) {
-				fullName.append('.');
-			}
-			fullName.append(ConfigurationMetadata.toDashedCase(name));
+		StringBuilder fullName = new StringBuilder(prefix == null ? "" : prefix);
+		if (fullName.length() > 0 && name != null) {
+			fullName.append(".");
 		}
+		fullName.append(name == null ? "" : ConfigurationMetadata.toDashedCase(name));
 		return fullName.toString();
 	}
 
@@ -139,6 +134,24 @@ public final class ItemMetadata implements Comparable<ItemMetadata> {
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder string = new StringBuilder(this.name);
+		buildToStringProperty(string, "type", this.type);
+		buildToStringProperty(string, "sourceType", this.sourceType);
+		buildToStringProperty(string, "description", this.description);
+		buildToStringProperty(string, "defaultValue", this.defaultValue);
+		buildToStringProperty(string, "deprecation", this.deprecation);
+		return string.toString();
+	}
+
+	protected void buildToStringProperty(StringBuilder string, String property,
+			Object value) {
+		if (value != null) {
+			string.append(" ").append(property).append(":").append(value);
+		}
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
@@ -183,25 +196,7 @@ public final class ItemMetadata implements Comparable<ItemMetadata> {
 	}
 
 	private int nullSafeHashCode(Object o) {
-		return (o != null) ? o.hashCode() : 0;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder string = new StringBuilder(this.name);
-		buildToStringProperty(string, "type", this.type);
-		buildToStringProperty(string, "sourceType", this.sourceType);
-		buildToStringProperty(string, "description", this.description);
-		buildToStringProperty(string, "defaultValue", this.defaultValue);
-		buildToStringProperty(string, "deprecation", this.deprecation);
-		return string.toString();
-	}
-
-	protected void buildToStringProperty(StringBuilder string, String property,
-			Object value) {
-		if (value != null) {
-			string.append(" ").append(property).append(":").append(value);
-		}
+		return (o == null ? 0 : o.hashCode());
 	}
 
 	@Override

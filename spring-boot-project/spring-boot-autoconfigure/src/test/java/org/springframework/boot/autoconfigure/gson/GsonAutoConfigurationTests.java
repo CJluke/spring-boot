@@ -291,7 +291,6 @@ public class GsonAutoConfigurationTests {
 			private String data = "nested";
 
 		}
-
 	}
 
 }

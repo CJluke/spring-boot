@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 
 package org.springframework.boot.autoconfigure.data.neo4j;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import com.hazelcast.util.Base64;
 import org.junit.After;
 import org.junit.Test;
 import org.neo4j.ogm.config.AutoIndexMode;
 import org.neo4j.ogm.config.Configuration;
 import org.neo4j.ogm.config.Credentials;
-import org.neo4j.ogm.drivers.embedded.driver.EmbeddedDriver;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -173,9 +174,23 @@ public class Neo4jPropertiesTests {
 
 	public Neo4jProperties load(boolean embeddedAvailable, String... environment) {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
-		if (!embeddedAvailable) {
-			ctx.setClassLoader(new FilteredClassLoader(EmbeddedDriver.class));
-		}
+		ctx.setClassLoader(new URLClassLoader(new URL[0], getClass().getClassLoader()) {
+
+			@Override
+			protected Class<?> loadClass(String name, boolean resolve)
+					throws ClassNotFoundException {
+				if (name.equals(Neo4jProperties.EMBEDDED_DRIVER)) {
+					if (embeddedAvailable) {
+						return TestEmbeddedDriver.class;
+					}
+					else {
+						throw new ClassNotFoundException();
+					}
+				}
+				return super.loadClass(name, resolve);
+			}
+
+		});
 		TestPropertyValues.of(environment).applyTo(ctx);
 		ctx.register(TestConfiguration.class);
 		ctx.refresh();
@@ -186,6 +201,10 @@ public class Neo4jPropertiesTests {
 	@org.springframework.context.annotation.Configuration
 	@EnableConfigurationProperties(Neo4jProperties.class)
 	static class TestConfiguration {
+
+	}
+
+	private static class TestEmbeddedDriver {
 
 	}
 

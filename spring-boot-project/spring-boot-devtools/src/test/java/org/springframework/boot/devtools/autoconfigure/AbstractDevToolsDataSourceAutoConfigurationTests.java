@@ -28,6 +28,8 @@ import org.junit.Test;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -51,6 +53,7 @@ public abstract class AbstractDevToolsDataSourceAutoConfigurationTests {
 	@Test
 	public void singleManuallyConfiguredDataSourceIsNotClosed() throws SQLException {
 		ConfigurableApplicationContext context = createContext(
+				DataSourcePropertiesConfiguration.class,
 				SingleDataSourceConfiguration.class);
 		DataSource dataSource = context.getBean(DataSource.class);
 		Statement statement = configureDataSourceBehavior(dataSource);
@@ -60,6 +63,7 @@ public abstract class AbstractDevToolsDataSourceAutoConfigurationTests {
 	@Test
 	public void multipleDataSourcesAreIgnored() throws SQLException {
 		ConfigurableApplicationContext context = createContext(
+				DataSourcePropertiesConfiguration.class,
 				MultipleDataSourcesConfiguration.class);
 		Collection<DataSource> dataSources = context.getBeansOfType(DataSource.class)
 				.values();
@@ -76,6 +80,7 @@ public abstract class AbstractDevToolsDataSourceAutoConfigurationTests {
 		AnnotatedGenericBeanDefinition beanDefinition = new AnnotatedGenericBeanDefinition(
 				dataSource.getClass());
 		context.registerBeanDefinition("dataSource", beanDefinition);
+		context.register(DataSourcePropertiesConfiguration.class);
 		context.register(DevToolsDataSourceAutoConfiguration.class);
 		context.refresh();
 		context.close();
@@ -138,6 +143,12 @@ public abstract class AbstractDevToolsDataSourceAutoConfigurationTests {
 		public DataSource dataSourceTwo() {
 			return mock(DataSource.class);
 		}
+
+	}
+
+	@Configuration
+	@EnableConfigurationProperties(DataSourceProperties.class)
+	static class DataSourcePropertiesConfiguration {
 
 	}
 

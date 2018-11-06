@@ -20,7 +20,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -36,7 +38,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Integration test for {@link DataRedisTest}.
@@ -50,6 +51,9 @@ public class DataRedisTestIntegrationTests {
 
 	@ClassRule
 	public static RedisContainer redis = new RedisContainer();
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Autowired
 	private RedisOperations<Object, Object> operations;
@@ -76,8 +80,8 @@ public class DataRedisTestIntegrationTests {
 
 	@Test
 	public void didNotInjectExampleService() {
-		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-				.isThrownBy(() -> this.applicationContext.getBean(ExampleService.class));
+		this.thrown.expect(NoSuchBeanDefinitionException.class);
+		this.applicationContext.getBean(ExampleService.class);
 	}
 
 	static class Initializer

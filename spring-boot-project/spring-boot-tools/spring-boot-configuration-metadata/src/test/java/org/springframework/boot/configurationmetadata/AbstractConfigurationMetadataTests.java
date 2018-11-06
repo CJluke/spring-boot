@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ package org.springframework.boot.configurationmetadata;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
+
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -30,6 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Stephane Nicoll
  */
 public abstract class AbstractConfigurationMetadataTests {
+
+	@Rule
+	public final ExpectedException thrown = ExpectedException.none();
 
 	protected void assertSource(ConfigurationMetadataSource actual, String groupId,
 			String type, String sourceType) {
@@ -44,7 +50,7 @@ public abstract class AbstractConfigurationMetadataTests {
 		assertThat(actual).isNotNull();
 		assertThat(actual.getId()).isEqualTo(id);
 		assertThat(actual.getName()).isEqualTo(name);
-		String typeName = (type != null) ? type.getName() : null;
+		String typeName = type != null ? type.getName() : null;
 		assertThat(actual.getType()).isEqualTo(typeName);
 		assertThat(actual.getDefaultValue()).isEqualTo(defaultValue);
 	}

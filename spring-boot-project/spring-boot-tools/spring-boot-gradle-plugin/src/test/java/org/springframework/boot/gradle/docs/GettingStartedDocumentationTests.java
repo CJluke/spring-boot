@@ -18,29 +18,25 @@ package org.springframework.boot.gradle.docs;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.springframework.boot.gradle.junit.GradleMultiDslSuite;
 import org.springframework.boot.gradle.testkit.GradleBuild;
 
 /**
  * Tests for the getting started documentation.
  *
  * @author Andy Wilkinson
- * @author Jean-Baptiste Nizet
  */
-@RunWith(GradleMultiDslSuite.class)
 public class GettingStartedDocumentationTests {
 
 	@Rule
-	public GradleBuild gradleBuild;
+	public GradleBuild gradleBuild = new GradleBuild();
 
 	// NOTE: We can't run any `apply-plugin` tests because during a release the
 	// jar won't be there
 
 	@Test
 	public void typicalPluginsAppliesExceptedPlugins() {
-		this.gradleBuild.script("src/main/gradle/getting-started/typical-plugins")
+		this.gradleBuild.script("src/main/gradle/getting-started/typical-plugins.gradle")
 				.build("verify");
 	}
 

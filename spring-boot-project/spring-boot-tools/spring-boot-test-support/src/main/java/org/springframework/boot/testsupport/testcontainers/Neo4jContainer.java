@@ -24,7 +24,7 @@ import org.neo4j.ogm.session.SessionFactory;
 import org.rnorth.ducttape.TimeoutException;
 import org.rnorth.ducttape.unreliables.Unreliables;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.containers.wait.HostPortWaitStrategy;
 
 /**
  * A {@link GenericContainer} for Neo4J.
@@ -34,27 +34,18 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
  */
 public class Neo4jContainer extends Container {
 
-	private static final int PORT = 7687;
-
 	public Neo4jContainer() {
-		super("neo4j:3.3.1", PORT, (container) -> container
-				.waitingFor(new WaitStrategy(container)).withEnv("NEO4J_AUTH", "none"));
+		super("neo4j:3.3.1", 7687, (container) -> container.waitingFor(new WaitStrategy())
+				.withEnv("NEO4J_AUTH", "none"));
 	}
 
-	private static final class WaitStrategy extends HostPortWaitStrategy {
-
-		private final GenericContainer<?> container;
-
-		private WaitStrategy(GenericContainer<?> container) {
-			this.container = container;
-		}
+	private static class WaitStrategy extends HostPortWaitStrategy {
 
 		@Override
-		public void waitUntilReady() {
+		protected void waitUntilReady() {
 			super.waitUntilReady();
 			Configuration configuration = new Configuration.Builder()
-					.uri("bolt://localhost:"
-							+ this.container.getMappedPort(Neo4jContainer.PORT))
+					.uri("bolt://localhost:" + this.container.getMappedPort(7687))
 					.build();
 			SessionFactory sessionFactory = new SessionFactory(configuration,
 					"org.springframework.boot.test.autoconfigure.data.neo4j");
@@ -62,8 +53,8 @@ public class Neo4jContainer extends Container {
 				Unreliables.retryUntilTrue((int) this.startupTimeout.getSeconds(),
 						TimeUnit.SECONDS, checkConnection(sessionFactory));
 			}
-			catch (TimeoutException ex) {
-				throw new IllegalStateException(ex);
+			catch (TimeoutException e) {
+				throw new IllegalStateException();
 			}
 		}
 

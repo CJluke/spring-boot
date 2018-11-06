@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
@@ -35,8 +37,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -48,18 +48,21 @@ import static org.mockito.Mockito.mock;
  */
 public class HttpTunnelPayloadTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void sequenceMustBePositive() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new HttpTunnelPayload(0, ByteBuffer.allocate(1)))
-				.withMessageContaining("Sequence must be positive");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Sequence must be positive");
+		new HttpTunnelPayload(0, ByteBuffer.allocate(1));
 	}
 
 	@Test
 	public void dataMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new HttpTunnelPayload(1, null))
-				.withMessageContaining("Data must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Data must not be null");
+		new HttpTunnelPayload(1, null);
 	}
 
 	@Test
@@ -99,8 +102,9 @@ public class HttpTunnelPayloadTests {
 		MockHttpServletRequest servletRequest = new MockHttpServletRequest();
 		servletRequest.setContent("hello".getBytes());
 		HttpInputMessage request = new ServletServerHttpRequest(servletRequest);
-		assertThatIllegalStateException().isThrownBy(() -> HttpTunnelPayload.get(request))
-				.withMessageContaining("Missing sequence header");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Missing sequence header");
+		HttpTunnelPayload.get(request);
 	}
 
 	@Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.boot.autoconfigure.info;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Properties;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -37,7 +36,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
@@ -62,38 +60,27 @@ public class ProjectInfoAutoConfiguration {
 	@ConditionalOnMissingBean
 	@Bean
 	public GitProperties gitProperties() throws Exception {
-		return new GitProperties(loadFrom(this.properties.getGit().getLocation(), "git",
-				this.properties.getGit().getEncoding()));
+		return new GitProperties(loadFrom(this.properties.getGit().getLocation(), "git"));
 	}
 
 	@ConditionalOnResource(resources = "${spring.info.build.location:classpath:META-INF/build-info.properties}")
 	@ConditionalOnMissingBean
 	@Bean
 	public BuildProperties buildProperties() throws Exception {
-		return new BuildProperties(loadFrom(this.properties.getBuild().getLocation(),
-				"build", this.properties.getBuild().getEncoding()));
+		return new BuildProperties(
+				loadFrom(this.properties.getBuild().getLocation(), "build"));
 	}
 
-	protected Properties loadFrom(Resource location, String prefix, Charset encoding)
-			throws IOException {
-		prefix = prefix.endsWith(".") ? prefix : prefix + ".";
-		Properties source = loadSource(location, encoding);
+	protected Properties loadFrom(Resource location, String prefix) throws IOException {
+		String p = prefix.endsWith(".") ? prefix : prefix + ".";
+		Properties source = PropertiesLoaderUtils.loadProperties(location);
 		Properties target = new Properties();
 		for (String key : source.stringPropertyNames()) {
-			if (key.startsWith(prefix)) {
-				target.put(key.substring(prefix.length()), source.get(key));
+			if (key.startsWith(p)) {
+				target.put(key.substring(p.length()), source.get(key));
 			}
 		}
 		return target;
-	}
-
-	private Properties loadSource(Resource location, Charset encoding)
-			throws IOException {
-		if (encoding != null) {
-			return PropertiesLoaderUtils
-					.loadProperties(new EncodedResource(location, encoding));
-		}
-		return PropertiesLoaderUtils.loadProperties(location);
 	}
 
 	static class GitResourceAvailableCondition extends SpringBootCondition {
@@ -104,7 +91,7 @@ public class ProjectInfoAutoConfiguration {
 		public ConditionOutcome getMatchOutcome(ConditionContext context,
 				AnnotatedTypeMetadata metadata) {
 			ResourceLoader loader = context.getResourceLoader();
-			loader = (loader != null) ? loader : this.defaultResourceLoader;
+			loader = (loader != null ? loader : this.defaultResourceLoader);
 			Environment environment = context.getEnvironment();
 			String location = environment.getProperty("spring.info.git.location");
 			if (location == null) {

@@ -15,7 +15,7 @@
 	</properties>
 	<dependencies>
 		<dependency>
-			<groupId>io.projectreactor.netty</groupId>
+			<groupId>io.projectreactor.ipc</groupId>
 			<artifactId>reactor-netty</artifactId>
 		</dependency>
 	</dependencies>

@@ -21,7 +21,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -42,9 +41,9 @@ public class JmxEndpointProperties {
 	private String domain = "org.springframework.boot";
 
 	/**
-	 * Whether unique runtime object names should be ensured.
+	 * Whether to ensure that ObjectNames are modified in case of conflict.
 	 */
-	private Boolean uniqueNames;
+	private boolean uniqueNames = false;
 
 	/**
 	 * Additional static properties to append to all ObjectNames of MBeans representing
@@ -71,14 +70,11 @@ public class JmxEndpointProperties {
 		this.domain = domain;
 	}
 
-	@Deprecated
-	@DeprecatedConfigurationProperty(replacement = "spring.jmx.unique-names")
-	public Boolean getUniqueNames() {
+	public boolean isUniqueNames() {
 		return this.uniqueNames;
 	}
 
-	@Deprecated
-	public void setUniqueNames(Boolean uniqueNames) {
+	public void setUniqueNames(boolean uniqueNames) {
 		this.uniqueNames = uniqueNames;
 	}
 
@@ -94,7 +90,7 @@ public class JmxEndpointProperties {
 		private Set<String> include = new LinkedHashSet<>();
 
 		/**
-		 * Endpoint IDs that should be excluded or '*' for all.
+		 * Endpoint IDs that should be excluded.
 		 */
 		private Set<String> exclude = new LinkedHashSet<>();
 

@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.autoconfigure.security.StaticResourceLocation;
-import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletPath;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.security.servlet.ApplicationContextRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -56,7 +56,7 @@ public final class StaticResourceRequest {
 	 * {@link StaticResourceRequestMatcher#excluding(StaticResourceLocation, StaticResourceLocation...)
 	 * excluding} method can be used to remove specific locations if required. For
 	 * example: <pre class="code">
-	 * PathRequest.toStaticResources().atCommonLocations().excluding(StaticResourceLocation.CSS)
+	 * StaticResourceRequest.atCommonLocations().excluding(StaticResourceLocation.CSS)
 	 * </pre>
 	 * @return the configured {@link RequestMatcher}
 	 */
@@ -67,7 +67,7 @@ public final class StaticResourceRequest {
 	/**
 	 * Returns a matcher that includes the specified {@link StaticResourceLocation
 	 * Locations}. For example: <pre class="code">
-	 * PathRequest.toStaticResources().at(StaticResourceLocation.CSS, StaticResourceLocation.JAVA_SCRIPT)
+	 * StaticResourceRequest.at(StaticResourceLocation.CSS, StaticResourceLocation.JAVA_SCRIPT)
 	 * </pre>
 	 * @param first the first location to include
 	 * @param rest additional locations to include
@@ -81,7 +81,7 @@ public final class StaticResourceRequest {
 	/**
 	 * Returns a matcher that includes the specified {@link StaticResourceLocation
 	 * Locations}. For example: <pre class="code">
-	 * PathRequest.toStaticResources().at(locations)
+	 * StaticResourceRequest.at(locations)
 	 * </pre>
 	 * @param locations the locations to include
 	 * @return the configured {@link RequestMatcher}
@@ -96,14 +96,14 @@ public final class StaticResourceRequest {
 	 * Locations}.
 	 */
 	public static final class StaticResourceRequestMatcher
-			extends ApplicationContextRequestMatcher<DispatcherServletPath> {
+			extends ApplicationContextRequestMatcher<ServerProperties> {
 
 		private final Set<StaticResourceLocation> locations;
 
 		private volatile RequestMatcher delegate;
 
 		private StaticResourceRequestMatcher(Set<StaticResourceLocation> locations) {
-			super(DispatcherServletPath.class);
+			super(ServerProperties.class);
 			this.locations = locations;
 		}
 
@@ -134,26 +134,25 @@ public final class StaticResourceRequest {
 		}
 
 		@Override
-		protected void initialized(
-				Supplier<DispatcherServletPath> dispatcherServletPath) {
+		protected void initialized(Supplier<ServerProperties> serverProperties) {
 			this.delegate = new OrRequestMatcher(
-					getDelegateMatchers(dispatcherServletPath.get()));
+					getDelegateMatchers(serverProperties.get()));
 		}
 
 		private List<RequestMatcher> getDelegateMatchers(
-				DispatcherServletPath dispatcherServletPath) {
-			return getPatterns(dispatcherServletPath).map(AntPathRequestMatcher::new)
+				ServerProperties serverProperties) {
+			return getPatterns(serverProperties).map(AntPathRequestMatcher::new)
 					.collect(Collectors.toList());
 		}
 
-		private Stream<String> getPatterns(DispatcherServletPath dispatcherServletPath) {
+		private Stream<String> getPatterns(ServerProperties serverProperties) {
 			return this.locations.stream().flatMap(StaticResourceLocation::getPatterns)
-					.map(dispatcherServletPath::getRelativePath);
+					.map(serverProperties.getServlet()::getPath);
 		}
 
 		@Override
 		protected boolean matches(HttpServletRequest request,
-				Supplier<DispatcherServletPath> context) {
+				Supplier<ServerProperties> context) {
 			return this.delegate.matches(request);
 		}
 

@@ -48,7 +48,7 @@ public final class ConditionMessage {
 	}
 
 	private ConditionMessage(ConditionMessage prior, String message) {
-		this.message = prior.isEmpty() ? message : prior + "; " + message;
+		this.message = (prior.isEmpty() ? message : prior + "; " + message);
 	}
 
 	/**
@@ -60,14 +60,8 @@ public final class ConditionMessage {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !ConditionMessage.class.isInstance(obj)) {
-			return false;
-		}
-		if (obj == this) {
-			return true;
-		}
-		return ObjectUtils.nullSafeEquals(((ConditionMessage) obj).message, this.message);
+	public String toString() {
+		return (this.message == null ? "" : this.message);
 	}
 
 	@Override
@@ -76,8 +70,14 @@ public final class ConditionMessage {
 	}
 
 	@Override
-	public String toString() {
-		return (this.message != null) ? this.message : "";
+	public boolean equals(Object obj) {
+		if (obj == null || !ConditionMessage.class.isInstance(obj)) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		return ObjectUtils.nullSafeEquals(((ConditionMessage) obj).message, this.message);
 	}
 
 	/**
@@ -358,7 +358,7 @@ public final class ConditionMessage {
 		 * @return a built {@link ConditionMessage}
 		 */
 		public ConditionMessage items(Style style, Object... items) {
-			return items(style, (items != null) ? Arrays.asList(items) : null);
+			return items(style, items == null ? null : Arrays.asList(items));
 		}
 
 		/**
@@ -415,7 +415,7 @@ public final class ConditionMessage {
 		QUOTE {
 			@Override
 			protected String applyToItem(Object item) {
-				return (item != null) ? "'" + item + "'" : null;
+				return (item == null ? null : "'" + item + "'");
 			}
 		};
 

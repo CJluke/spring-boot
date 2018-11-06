@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package org.springframework.boot.devtools.remote.server;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -36,27 +37,30 @@ import static org.mockito.Mockito.mock;
  */
 public class UrlHandlerMapperTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	private Handler handler = mock(Handler.class);
 
 	@Test
 	public void requestUriMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new UrlHandlerMapper(null, this.handler))
-				.withMessageContaining("URL must not be empty");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must not be empty");
+		new UrlHandlerMapper(null, this.handler);
 	}
 
 	@Test
 	public void requestUriMustNotBeEmpty() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new UrlHandlerMapper("", this.handler))
-				.withMessageContaining("URL must not be empty");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must not be empty");
+		new UrlHandlerMapper("", this.handler);
 	}
 
 	@Test
 	public void requestUrlMustStartWithSlash() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new UrlHandlerMapper("tunnel", this.handler))
-				.withMessageContaining("URL must start with '/'");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must start with '/'");
+		new UrlHandlerMapper("tunnel", this.handler);
 	}
 
 	@Test

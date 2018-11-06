@@ -19,22 +19,19 @@ package org.springframework.boot.autoconfigure.amqp;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.SslContextFactory;
-import com.rabbitmq.client.TrustEverythingTrustManager;
 import org.aopalliance.aop.Advice;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
-import org.springframework.amqp.rabbit.config.AbstractRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.config.DirectRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.config.RabbitListenerConfigUtils;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -57,17 +54,12 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.retry.RetryPolicy;
-import org.springframework.retry.backoff.BackOffPolicy;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.interceptor.MethodInvocationRecoverer;
-import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -83,6 +75,9 @@ import static org.mockito.Mockito.verify;
  * @author Gary Russell
  */
 public class RabbitAutoConfigurationTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
 			.withConfiguration(AutoConfigurations.of(RabbitAutoConfiguration.class));
@@ -286,28 +281,6 @@ public class RabbitAutoConfigurationTests {
 	}
 
 	@Test
-	public void testRabbitTemplateRetryWithCustomizer() {
-		this.contextRunner
-				.withUserConfiguration(RabbitRetryTemplateCustomizerConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.template.retry.enabled:true",
-						"spring.rabbitmq.template.retry.initialInterval:2000")
-				.run((context) -> {
-					RabbitTemplate rabbitTemplate = context.getBean(RabbitTemplate.class);
-					DirectFieldAccessor dfa = new DirectFieldAccessor(rabbitTemplate);
-					RetryTemplate retryTemplate = (RetryTemplate) dfa
-							.getPropertyValue("retryTemplate");
-					assertThat(retryTemplate).isNotNull();
-					dfa = new DirectFieldAccessor(retryTemplate);
-					assertThat(dfa.getPropertyValue("backOffPolicy"))
-							.isSameAs(context.getBean(
-									RabbitRetryTemplateCustomizerConfiguration.class).backOffPolicy);
-					ExponentialBackOffPolicy backOffPolicy = (ExponentialBackOffPolicy) dfa
-							.getPropertyValue("backOffPolicy");
-					assertThat(backOffPolicy.getInitialInterval()).isEqualTo(100);
-				});
-	}
-
-	@Test
 	public void testRabbitTemplateExchangeAndRoutingKey() {
 		this.contextRunner.withUserConfiguration(TestConfiguration.class)
 				.withPropertyValues("spring.rabbitmq.template.exchange:my-exchange",
@@ -317,17 +290,6 @@ public class RabbitAutoConfigurationTests {
 					assertThat(rabbitTemplate.getExchange()).isEqualTo("my-exchange");
 					assertThat(rabbitTemplate.getRoutingKey())
 							.isEqualTo("my-routing-key");
-				});
-	}
-
-	@Test
-	public void testRabbitTemplateDefaultQueue() {
-		this.contextRunner.withUserConfiguration(TestConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.template.queue:default-queue")
-				.run((context) -> {
-					RabbitTemplate rabbitTemplate = context.getBean(RabbitTemplate.class);
-					assertThat(rabbitTemplate).hasFieldOrPropertyWithValue("queue",
-							"default-queue");
 				});
 	}
 
@@ -409,14 +371,15 @@ public class RabbitAutoConfigurationTests {
 
 	@Test
 	public void testStaticQueues() {
-		// There should NOT be an AmqpAdmin bean when dynamic is switch to false
 		this.contextRunner.withUserConfiguration(TestConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.dynamic:false")
-				.run((context) -> assertThatExceptionOfType(
-						NoSuchBeanDefinitionException.class)
-								.isThrownBy(() -> context.getBean(AmqpAdmin.class))
-								.withMessageContaining("No qualifying bean of type '"
-										+ AmqpAdmin.class.getName() + "'"));
+				.withPropertyValues("spring.rabbitmq.dynamic:false").run((context) -> {
+					// There should NOT be an AmqpAdmin bean when dynamic is switch to
+					// false
+					this.thrown.expect(NoSuchBeanDefinitionException.class);
+					this.thrown.expectMessage("No qualifying bean of type");
+					this.thrown.expectMessage(AmqpAdmin.class.getName());
+					context.getBean(AmqpAdmin.class);
+				});
 	}
 
 	@Test
@@ -464,8 +427,7 @@ public class RabbitAutoConfigurationTests {
 						"spring.rabbitmq.listener.simple.prefetch:40",
 						"spring.rabbitmq.listener.simple.defaultRequeueRejected:false",
 						"spring.rabbitmq.listener.simple.idleEventInterval:5",
-						"spring.rabbitmq.listener.simple.transactionSize:20",
-						"spring.rabbitmq.listener.simple.missingQueuesFatal:false")
+						"spring.rabbitmq.listener.simple.transactionSize:20")
 				.run((context) -> {
 					SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory = context
 							.getBean("rabbitListenerContainerFactory",
@@ -476,8 +438,6 @@ public class RabbitAutoConfigurationTests {
 					assertThat(dfa.getPropertyValue("maxConcurrentConsumers"))
 							.isEqualTo(10);
 					assertThat(dfa.getPropertyValue("txSize")).isEqualTo(20);
-					assertThat(dfa.getPropertyValue("missingQueuesFatal"))
-							.isEqualTo(false);
 					checkCommonProps(context, dfa);
 				});
 	}
@@ -498,8 +458,7 @@ public class RabbitAutoConfigurationTests {
 						"spring.rabbitmq.listener.direct.consumers-per-queue:5",
 						"spring.rabbitmq.listener.direct.prefetch:40",
 						"spring.rabbitmq.listener.direct.defaultRequeueRejected:false",
-						"spring.rabbitmq.listener.direct.idleEventInterval:5",
-						"spring.rabbitmq.listener.direct.missingQueuesFatal:true")
+						"spring.rabbitmq.listener.direct.idleEventInterval:5")
 				.run((context) -> {
 					DirectRabbitListenerContainerFactory rabbitListenerContainerFactory = context
 							.getBean("rabbitListenerContainerFactory",
@@ -507,57 +466,8 @@ public class RabbitAutoConfigurationTests {
 					DirectFieldAccessor dfa = new DirectFieldAccessor(
 							rabbitListenerContainerFactory);
 					assertThat(dfa.getPropertyValue("consumersPerQueue")).isEqualTo(5);
-					assertThat(dfa.getPropertyValue("missingQueuesFatal"))
-							.isEqualTo(true);
 					checkCommonProps(context, dfa);
 				});
-	}
-
-	@Test
-	public void testSimpleRabbitListenerContainerFactoryRetryWithCustomizer() {
-		this.contextRunner
-				.withUserConfiguration(RabbitRetryTemplateCustomizerConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.listener.simple.retry.enabled:true",
-						"spring.rabbitmq.listener.simple.retry.maxAttempts:4")
-				.run((context) -> {
-					SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory = context
-							.getBean("rabbitListenerContainerFactory",
-									SimpleRabbitListenerContainerFactory.class);
-					assertListenerRetryTemplate(rabbitListenerContainerFactory,
-							context.getBean(
-									RabbitRetryTemplateCustomizerConfiguration.class).retryPolicy);
-				});
-	}
-
-	@Test
-	public void testDirectRabbitListenerContainerFactoryRetryWithCustomizer() {
-		this.contextRunner
-				.withUserConfiguration(RabbitRetryTemplateCustomizerConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.listener.type:direct",
-						"spring.rabbitmq.listener.direct.retry.enabled:true",
-						"spring.rabbitmq.listener.direct.retry.maxAttempts:4")
-				.run((context) -> {
-					DirectRabbitListenerContainerFactory rabbitListenerContainerFactory = context
-							.getBean("rabbitListenerContainerFactory",
-									DirectRabbitListenerContainerFactory.class);
-					assertListenerRetryTemplate(rabbitListenerContainerFactory,
-							context.getBean(
-									RabbitRetryTemplateCustomizerConfiguration.class).retryPolicy);
-				});
-	}
-
-	private void assertListenerRetryTemplate(
-			AbstractRabbitListenerContainerFactory<?> rabbitListenerContainerFactory,
-			RetryPolicy retryPolicy) {
-		DirectFieldAccessor dfa = new DirectFieldAccessor(rabbitListenerContainerFactory);
-		Advice[] adviceChain = (Advice[]) dfa.getPropertyValue("adviceChain");
-		assertThat(adviceChain).isNotNull();
-		assertThat(adviceChain.length).isEqualTo(1);
-		dfa = new DirectFieldAccessor(adviceChain[0]);
-		RetryTemplate retryTemplate = (RetryTemplate) dfa
-				.getPropertyValue("retryOperations");
-		dfa = new DirectFieldAccessor(retryTemplate);
-		assertThat(dfa.getPropertyValue("retryPolicy")).isSameAs(retryPolicy);
 	}
 
 	@Test
@@ -769,45 +679,6 @@ public class RabbitAutoConfigurationTests {
 				.run((context) -> assertThat(context).hasNotFailed());
 	}
 
-	@Test
-	public void enableSslWithValidateServerCertificateFalse() throws Exception {
-		this.contextRunner.withUserConfiguration(TestConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.ssl.enabled:true",
-						"spring.rabbitmq.ssl.validateServerCertificate=false")
-				.run((context) -> {
-					com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory = getTargetConnectionFactory(
-							context);
-					TrustManager trustManager = getTrustManager(rabbitConnectionFactory);
-					assertThat(trustManager)
-							.isInstanceOf(TrustEverythingTrustManager.class);
-				});
-	}
-
-	@Test
-	public void enableSslWithValidateServerCertificateDefault() throws Exception {
-		this.contextRunner.withUserConfiguration(TestConfiguration.class)
-				.withPropertyValues("spring.rabbitmq.ssl.enabled:true").run((context) -> {
-					com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory = getTargetConnectionFactory(
-							context);
-					TrustManager trustManager = getTrustManager(rabbitConnectionFactory);
-					assertThat(trustManager)
-							.isNotInstanceOf(TrustEverythingTrustManager.class);
-				});
-	}
-
-	private TrustManager getTrustManager(
-			com.rabbitmq.client.ConnectionFactory rabbitConnectionFactory) {
-		SslContextFactory sslContextFactory = (SslContextFactory) ReflectionTestUtils
-				.getField(rabbitConnectionFactory, "sslContextFactory");
-		SSLContext sslContext = sslContextFactory.create("connection");
-		Object spi = ReflectionTestUtils.getField(sslContext, "contextSpi");
-		Object trustManager = ReflectionTestUtils.getField(spi, "trustManager");
-		while (trustManager.getClass().getName().endsWith("Wrapper")) {
-			trustManager = ReflectionTestUtils.getField(trustManager, "tm");
-		}
-		return (TrustManager) trustManager;
-	}
-
 	private com.rabbitmq.client.ConnectionFactory getTargetConnectionFactory(
 			AssertableApplicationContext context) {
 		CachingConnectionFactory connectionFactory = context
@@ -918,33 +789,6 @@ public class RabbitAutoConfigurationTests {
 		@Bean
 		public ConnectionNameStrategy myConnectionNameStrategy() {
 			return (connectionFactory) -> "test#" + this.counter.getAndIncrement();
-		}
-
-	}
-
-	@Configuration
-	protected static class RabbitRetryTemplateCustomizerConfiguration {
-
-		private final BackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
-
-		private final RetryPolicy retryPolicy = new NeverRetryPolicy();
-
-		@Bean
-		public RabbitRetryTemplateCustomizer rabbitTemplateRetryTemplateCustomizer() {
-			return (target, template) -> {
-				if (target.equals(RabbitRetryTemplateCustomizer.Target.SENDER)) {
-					template.setBackOffPolicy(this.backOffPolicy);
-				}
-			};
-		}
-
-		@Bean
-		public RabbitRetryTemplateCustomizer rabbitListenerRetryTemplateCustomizer() {
-			return (target, template) -> {
-				if (target.equals(RabbitRetryTemplateCustomizer.Target.LISTENER)) {
-					template.setRetryPolicy(this.retryPolicy);
-				}
-			};
 		}
 
 	}

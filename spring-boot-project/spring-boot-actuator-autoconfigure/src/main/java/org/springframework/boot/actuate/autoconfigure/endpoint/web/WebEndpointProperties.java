@@ -81,7 +81,7 @@ public class WebEndpointProperties {
 		private Set<String> include = new LinkedHashSet<>();
 
 		/**
-		 * Endpoint IDs that should be excluded or '*' for all.
+		 * Endpoint IDs that should be excluded.
 		 */
 		private Set<String> exclude = new LinkedHashSet<>();
 

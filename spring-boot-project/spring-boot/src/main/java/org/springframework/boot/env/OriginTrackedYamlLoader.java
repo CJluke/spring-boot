@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.BaseConstructor;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -65,9 +64,7 @@ class OriginTrackedYamlLoader extends YamlProcessor {
 		Representer representer = new Representer();
 		DumperOptions dumperOptions = new DumperOptions();
 		LimitedResolver resolver = new LimitedResolver();
-		LoaderOptions loaderOptions = new LoaderOptions();
-		loaderOptions.setAllowDuplicateKeys(false);
-		return new Yaml(constructor, representer, dumperOptions, loaderOptions, resolver);
+		return new Yaml(constructor, representer, dumperOptions, resolver);
 	}
 
 	public List<Map<String, Object>> load() {
@@ -79,7 +76,7 @@ class OriginTrackedYamlLoader extends YamlProcessor {
 	/**
 	 * {@link Constructor} that tracks property origins.
 	 */
-	private class OriginTrackingConstructor extends Constructor {
+	private class OriginTrackingConstructor extends StrictMapAppenderConstructor {
 
 		@Override
 		protected Object constructObject(Node node) {
@@ -105,7 +102,7 @@ class OriginTrackedYamlLoader extends YamlProcessor {
 		}
 
 		private Object getValue(Object value) {
-			return (value != null) ? value : "";
+			return (value != null ? value : "");
 		}
 
 		private Origin getOrigin(Node node) {
@@ -124,7 +121,7 @@ class OriginTrackedYamlLoader extends YamlProcessor {
 
 		KeyScalarNode(ScalarNode node) {
 			super(node.getTag(), node.getValue(), node.getStartMark(), node.getEndMark(),
-					node.getScalarStyle());
+					node.getStyle());
 		}
 
 		public static NodeTuple get(NodeTuple nodeTuple) {

@@ -16,13 +16,9 @@
 
 package org.springframework.boot.gradle.docs;
 
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import org.springframework.boot.gradle.junit.GradleMultiDslSuite;
-import org.springframework.boot.gradle.testkit.Dsl;
 import org.springframework.boot.gradle.testkit.GradleBuild;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,40 +27,30 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for the managing dependencies documentation.
  *
  * @author Andy Wilkinson
- * @author Jean-Baptiste Nizet
  */
-@RunWith(GradleMultiDslSuite.class)
 public class ManagingDependenciesDocumentationTests {
 
 	@Rule
-	public GradleBuild gradleBuild;
+	public GradleBuild gradleBuild = new GradleBuild();
 
 	@Test
 	public void dependenciesExampleEvaluatesSuccessfully() {
-		this.gradleBuild.script("src/main/gradle/managing-dependencies/dependencies")
+		this.gradleBuild
+				.script("src/main/gradle/managing-dependencies/dependencies.gradle")
 				.build();
 	}
 
 	@Test
 	public void customManagedVersions() {
 		assertThat(this.gradleBuild
-				.script("src/main/gradle/managing-dependencies/custom-version")
+				.script("src/main/gradle/managing-dependencies/custom-version.gradle")
 				.build("slf4jVersion").getOutput()).contains("1.7.20");
 	}
 
 	@Test
 	public void dependencyManagementInIsolation() {
 		assertThat(this.gradleBuild
-				.script("src/main/gradle/managing-dependencies/configure-bom")
-				.build("dependencyManagement").getOutput())
-						.contains("org.springframework.boot:spring-boot-starter ");
-	}
-
-	@Test
-	public void dependencyManagementInIsolationWithPluginsBlock() {
-		Assume.assumeTrue(this.gradleBuild.getDsl() == Dsl.KOTLIN);
-		assertThat(this.gradleBuild.script(
-				"src/main/gradle/managing-dependencies/configure-bom-with-plugins")
+				.script("src/main/gradle/managing-dependencies/configure-bom.gradle")
 				.build("dependencyManagement").getOutput())
 						.contains("org.springframework.boot:spring-boot-starter ");
 	}

@@ -68,8 +68,7 @@ import org.springframework.util.Assert;
  * Requests should be made using HTTP GET or POST (depending if there is a payload), with
  * any payload contained in the body. The following response codes can be returned from
  * the server:
- * <table>
- * <caption>Response Codes</caption>
+ * <table summary="Response Codes">
  * <tr>
  * <th>Status</th>
  * <th>Meaning</th>

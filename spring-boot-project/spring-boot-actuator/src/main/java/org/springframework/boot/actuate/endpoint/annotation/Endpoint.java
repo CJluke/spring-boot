@@ -22,8 +22,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
-
 /**
  * Identifies a type as being an actuator endpoint that provides information about the
  * running application. Endpoints can be exposed over a variety of technologies including
@@ -54,9 +52,8 @@ import org.springframework.boot.actuate.endpoint.EndpointId;
 public @interface Endpoint {
 
 	/**
-	 * The id of the endpoint (must follow {@link EndpointId} rules).
+	 * The id of the endpoint.
 	 * @return the id
-	 * @see EndpointId
 	 */
 	String id() default "";
 

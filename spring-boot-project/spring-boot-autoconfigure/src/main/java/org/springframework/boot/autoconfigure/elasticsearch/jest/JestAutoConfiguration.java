@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.springframework.boot.autoconfigure.elasticsearch.jest;
 
 import java.time.Duration;
+import java.util.List;
 
 import com.google.gson.Gson;
 import io.searchbox.client.JestClient;
@@ -38,7 +39,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
 
 /**
- * {@link EnableAutoConfiguration Auto-configuration} for Jest.
+ * {@link EnableAutoConfiguration Auto-Configuration} for Jest.
  *
  * @author Stephane Nicoll
  * @since 1.4.0
@@ -53,13 +54,13 @@ public class JestAutoConfiguration {
 
 	private final ObjectProvider<Gson> gsonProvider;
 
-	private final ObjectProvider<HttpClientConfigBuilderCustomizer> builderCustomizers;
+	private final List<HttpClientConfigBuilderCustomizer> builderCustomizers;
 
 	public JestAutoConfiguration(JestProperties properties, ObjectProvider<Gson> gson,
-			ObjectProvider<HttpClientConfigBuilderCustomizer> builderCustomizers) {
+			ObjectProvider<List<HttpClientConfigBuilderCustomizer>> builderCustomizers) {
 		this.properties = properties;
 		this.gsonProvider = gson;
-		this.builderCustomizers = builderCustomizers;
+		this.builderCustomizers = builderCustomizers.getIfAvailable();
 	}
 
 	@Bean(destroyMethod = "shutdownClient")
@@ -92,8 +93,11 @@ public class JestAutoConfiguration {
 	}
 
 	private void customize(HttpClientConfig.Builder builder) {
-		this.builderCustomizers.orderedStream()
-				.forEach((customizer) -> customizer.customize(builder));
+		if (this.builderCustomizers != null) {
+			for (HttpClientConfigBuilderCustomizer customizer : this.builderCustomizers) {
+				customizer.customize(builder);
+			}
+		}
 	}
 
 }

@@ -102,6 +102,11 @@ public class ParentContextCloserApplicationListener
 		}
 
 		@Override
+		public int hashCode() {
+			return ObjectUtils.nullSafeHashCode(this.childContext.get());
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
@@ -115,11 +120,6 @@ public class ParentContextCloserApplicationListener
 						other.childContext.get());
 			}
 			return super.equals(obj);
-		}
-
-		@Override
-		public int hashCode() {
-			return ObjectUtils.nullSafeHashCode(this.childContext.get());
 		}
 
 	}

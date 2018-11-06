@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -32,7 +34,6 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,6 +46,9 @@ import static org.mockito.Mockito.verify;
 public class DelayedLiveReloadTriggerTests {
 
 	private static final String URL = "http://localhost:8080";
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Mock
 	private OptionalLiveReloadServer liveReloadServer;
@@ -80,32 +84,30 @@ public class DelayedLiveReloadTriggerTests {
 
 	@Test
 	public void liveReloadServerMustNotBeNull() {
-		assertThatIllegalArgumentException().isThrownBy(
-				() -> new DelayedLiveReloadTrigger(null, this.requestFactory, URL))
-				.withMessageContaining("LiveReloadServer must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("LiveReloadServer must not be null");
+		new DelayedLiveReloadTrigger(null, this.requestFactory, URL);
 	}
 
 	@Test
 	public void requestFactoryMustNotBeNull() {
-		assertThatIllegalArgumentException().isThrownBy(
-				() -> new DelayedLiveReloadTrigger(this.liveReloadServer, null, URL))
-				.withMessageContaining("RequestFactory must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("RequestFactory must not be null");
+		new DelayedLiveReloadTrigger(this.liveReloadServer, null, URL);
 	}
 
 	@Test
 	public void urlMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new DelayedLiveReloadTrigger(this.liveReloadServer,
-						this.requestFactory, null))
-				.withMessageContaining("URL must not be empty");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must not be empty");
+		new DelayedLiveReloadTrigger(this.liveReloadServer, this.requestFactory, null);
 	}
 
 	@Test
 	public void urlMustNotBeEmpty() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new DelayedLiveReloadTrigger(this.liveReloadServer,
-						this.requestFactory, ""))
-				.withMessageContaining("URL must not be empty");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must not be empty");
+		new DelayedLiveReloadTrigger(this.liveReloadServer, this.requestFactory, "");
 	}
 
 	@Test

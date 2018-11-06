@@ -18,7 +18,9 @@ package org.springframework.boot.actuate.endpoint.invoke.convert;
 
 import java.time.OffsetDateTime;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.actuate.endpoint.invoke.OperationParameter;
 import org.springframework.boot.actuate.endpoint.invoke.ParameterMappingException;
@@ -27,7 +29,6 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.format.support.DefaultFormattingConversionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -41,6 +42,9 @@ import static org.mockito.Mockito.verify;
  * @author Phillip Webb
  */
 public class ConversionServiceParameterValueMapperTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void mapParameterShouldDelegateToConversionService() {
@@ -86,9 +90,9 @@ public class ConversionServiceParameterValueMapperTests {
 		ConversionService conversionService = new DefaultConversionService();
 		ConversionServiceParameterValueMapper mapper = new ConversionServiceParameterValueMapper(
 				conversionService);
-		assertThatExceptionOfType(ParameterMappingException.class).isThrownBy(() -> mapper
-				.mapParameterValue(new TestOperationParameter(OffsetDateTime.class),
-						"2011-12-03T10:15:30+01:00"));
+		this.thrown.expect(ParameterMappingException.class);
+		mapper.mapParameterValue(new TestOperationParameter(OffsetDateTime.class),
+				"2011-12-03T10:15:30+01:00");
 	}
 
 	private static class TestOperationParameter implements OperationParameter {

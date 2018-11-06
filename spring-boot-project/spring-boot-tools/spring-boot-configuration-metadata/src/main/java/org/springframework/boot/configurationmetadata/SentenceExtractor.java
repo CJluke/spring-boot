@@ -17,9 +17,7 @@
 package org.springframework.boot.configurationmetadata;
 
 import java.text.BreakIterator;
-import java.util.Arrays;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 /**
  * Utility to extract the first sentence of a text.
@@ -47,7 +45,11 @@ class SentenceExtractor {
 
 	private String removeSpaceBetweenLine(String text) {
 		String[] lines = text.split(System.lineSeparator());
-		return Arrays.stream(lines).map(String::trim).collect(Collectors.joining(" "));
+		StringBuilder sb = new StringBuilder();
+		for (String line : lines) {
+			sb.append(line.trim()).append(" ");
+		}
+		return sb.toString().trim();
 	}
 
 }

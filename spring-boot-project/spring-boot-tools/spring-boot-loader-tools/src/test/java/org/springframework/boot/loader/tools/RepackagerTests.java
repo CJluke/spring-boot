@@ -18,7 +18,6 @@ package org.springframework.boot.loader.tools;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermission;
@@ -26,20 +25,18 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Random;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -48,8 +45,6 @@ import org.springframework.boot.loader.tools.sample.ClassWithoutMainMethod;
 import org.springframework.util.FileCopyUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -82,6 +77,9 @@ public class RepackagerTests {
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	private TestJarFile testJarFile;
 
 	@Before
@@ -91,19 +89,20 @@ public class RepackagerTests {
 
 	@Test
 	public void nullSource() {
-		assertThatIllegalArgumentException().isThrownBy(() -> new Repackager(null));
+		this.thrown.expect(IllegalArgumentException.class);
+		new Repackager(null);
 	}
 
 	@Test
 	public void missingSource() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new Repackager(new File("missing")));
+		this.thrown.expect(IllegalArgumentException.class);
+		new Repackager(new File("missing"));
 	}
 
 	@Test
 	public void directorySource() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new Repackager(this.temporaryFolder.getRoot()));
+		this.thrown.expect(IllegalArgumentException.class);
+		new Repackager(this.temporaryFolder.getRoot());
 	}
 
 	@Test
@@ -174,18 +173,18 @@ public class RepackagerTests {
 		this.testJarFile.addClass("a/b/D.class", ClassWithMainMethod.class);
 		File file = this.testJarFile.getFile();
 		Repackager repackager = new Repackager(file);
-		assertThatIllegalStateException()
-				.isThrownBy(() -> repackager.repackage(NO_LIBRARIES))
-				.withMessageContaining("Unable to find a single main class "
-						+ "from the following candidates [a.b.C, a.b.D]");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Unable to find a single main class "
+				+ "from the following candidates [a.b.C, a.b.D]");
+		repackager.repackage(NO_LIBRARIES);
 	}
 
 	@Test
 	public void noMainClass() throws Exception {
 		this.testJarFile.addClass("a/b/C.class", ClassWithoutMainMethod.class);
-		assertThatIllegalStateException().isThrownBy(
-				() -> new Repackager(this.testJarFile.getFile()).repackage(NO_LIBRARIES))
-				.withMessageContaining("Unable to find main class");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Unable to find main class");
+		new Repackager(this.testJarFile.getFile()).repackage(NO_LIBRARIES);
 	}
 
 	@Test
@@ -252,18 +251,18 @@ public class RepackagerTests {
 	public void nullDestination() throws Exception {
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		Repackager repackager = new Repackager(this.testJarFile.getFile());
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> repackager.repackage(null, NO_LIBRARIES))
-				.withMessageContaining("Invalid destination");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Invalid destination");
+		repackager.repackage(null, NO_LIBRARIES);
 	}
 
 	@Test
 	public void destinationIsDirectory() throws Exception {
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		Repackager repackager = new Repackager(this.testJarFile.getFile());
-		assertThatIllegalArgumentException().isThrownBy(
-				() -> repackager.repackage(this.temporaryFolder.getRoot(), NO_LIBRARIES))
-				.withMessageContaining("Invalid destination");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Invalid destination");
+		repackager.repackage(this.temporaryFolder.getRoot(), NO_LIBRARIES);
 	}
 
 	@Test
@@ -281,18 +280,18 @@ public class RepackagerTests {
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		File file = this.testJarFile.getFile();
 		Repackager repackager = new Repackager(file);
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> repackager.repackage(file, null))
-				.withMessageContaining("Libraries must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Libraries must not be null");
+		repackager.repackage(file, null);
 	}
 
 	@Test
 	public void libraries() throws Exception {
 		TestJarFile libJar = new TestJarFile(this.temporaryFolder);
 		libJar.addClass("a/b/C.class", ClassWithoutMainMethod.class, JAN_1_1985);
-		File libJarFile = libJar.getFile();
-		File libJarFileToUnpack = libJar.getFile();
-		File libNonJarFile = this.temporaryFolder.newFile();
+		final File libJarFile = libJar.getFile();
+		final File libJarFileToUnpack = libJar.getFile();
+		final File libNonJarFile = this.temporaryFolder.newFile();
 		FileCopyUtils.copy(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 }, libNonJarFile);
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		this.testJarFile.addFile("BOOT-INF/lib/" + libJarFileToUnpack.getName(),
@@ -320,29 +319,28 @@ public class RepackagerTests {
 	public void duplicateLibraries() throws Exception {
 		TestJarFile libJar = new TestJarFile(this.temporaryFolder);
 		libJar.addClass("a/b/C.class", ClassWithoutMainMethod.class);
-		File libJarFile = libJar.getFile();
+		final File libJarFile = libJar.getFile();
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		File file = this.testJarFile.getFile();
 		Repackager repackager = new Repackager(file);
-		assertThatIllegalStateException()
-				.isThrownBy(() -> repackager.repackage((callback) -> {
-					callback.library(
-							new Library(libJarFile, LibraryScope.COMPILE, false));
-					callback.library(
-							new Library(libJarFile, LibraryScope.COMPILE, false));
-				})).withMessageContaining("Duplicate library");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Duplicate library");
+		repackager.repackage((callback) -> {
+			callback.library(new Library(libJarFile, LibraryScope.COMPILE, false));
+			callback.library(new Library(libJarFile, LibraryScope.COMPILE, false));
+		});
 	}
 
 	@Test
 	public void customLayout() throws Exception {
 		TestJarFile libJar = new TestJarFile(this.temporaryFolder);
 		libJar.addClass("a/b/C.class", ClassWithoutMainMethod.class);
-		File libJarFile = libJar.getFile();
+		final File libJarFile = libJar.getFile();
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		File file = this.testJarFile.getFile();
 		Repackager repackager = new Repackager(file);
 		Layout layout = mock(Layout.class);
-		LibraryScope scope = mock(LibraryScope.class);
+		final LibraryScope scope = mock(LibraryScope.class);
 		given(layout.getLauncherClassName()).willReturn("testLauncher");
 		given(layout.getLibraryDestination(anyString(), eq(scope))).willReturn("test/");
 		given(layout.getLibraryDestination(anyString(), eq(LibraryScope.COMPILE)))
@@ -361,12 +359,12 @@ public class RepackagerTests {
 	public void customLayoutNoBootLib() throws Exception {
 		TestJarFile libJar = new TestJarFile(this.temporaryFolder);
 		libJar.addClass("a/b/C.class", ClassWithoutMainMethod.class);
-		File libJarFile = libJar.getFile();
+		final File libJarFile = libJar.getFile();
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		File file = this.testJarFile.getFile();
 		Repackager repackager = new Repackager(file);
 		Layout layout = mock(Layout.class);
-		LibraryScope scope = mock(LibraryScope.class);
+		final LibraryScope scope = mock(LibraryScope.class);
 		given(layout.getLauncherClassName()).willReturn("testLauncher");
 		repackager.setLayout(layout);
 		repackager.repackage(
@@ -419,8 +417,9 @@ public class RepackagerTests {
 	public void nullCustomLayout() throws Exception {
 		this.testJarFile.addClass("a/b/C.class", ClassWithoutMainMethod.class);
 		Repackager repackager = new Repackager(this.testJarFile.getFile());
-		assertThatIllegalArgumentException().isThrownBy(() -> repackager.setLayout(null))
-				.withMessageContaining("Layout must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Layout must not be null");
+		repackager.setLayout(null);
 	}
 
 	@Test
@@ -626,39 +625,17 @@ public class RepackagerTests {
 	public void layoutCanOmitLibraries() throws IOException {
 		TestJarFile libJar = new TestJarFile(this.temporaryFolder);
 		libJar.addClass("a/b/C.class", ClassWithoutMainMethod.class);
-		File libJarFile = libJar.getFile();
+		final File libJarFile = libJar.getFile();
 		this.testJarFile.addClass("a/b/C.class", ClassWithMainMethod.class);
 		File file = this.testJarFile.getFile();
 		Repackager repackager = new Repackager(file);
 		Layout layout = mock(Layout.class);
-		LibraryScope scope = mock(LibraryScope.class);
+		final LibraryScope scope = mock(LibraryScope.class);
 		repackager.setLayout(layout);
 		repackager.repackage(
 				(callback) -> callback.library(new Library(libJarFile, scope)));
 		assertThat(getEntryNames(file)).containsExactly("META-INF/",
 				"META-INF/MANIFEST.MF", "a/", "a/b/", "a/b/C.class");
-	}
-
-	@Test
-	public void jarThatUsesCustomCompressionConfigurationCanBeRepackaged()
-			throws IOException {
-		File source = this.temporaryFolder.newFile("source.jar");
-		ZipOutputStream output = new ZipOutputStream(new FileOutputStream(source)) {
-			{
-				this.def = new Deflater(Deflater.NO_COMPRESSION, true);
-			}
-		};
-		byte[] data = new byte[1024 * 1024];
-		new Random().nextBytes(data);
-		ZipEntry entry = new ZipEntry("entry.dat");
-		output.putNextEntry(entry);
-		output.write(data);
-		output.closeEntry();
-		output.close();
-		File dest = this.temporaryFolder.newFile("dest.jar");
-		Repackager repackager = new Repackager(source);
-		repackager.setMainClass("com.example.Main");
-		repackager.repackage(dest, NO_LIBRARIES);
 	}
 
 	private File createLibrary() throws IOException {

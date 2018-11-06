@@ -16,6 +16,7 @@
 
 package org.springframework.boot.actuate.endpoint.web;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import javax.servlet.GenericServlet;
@@ -27,16 +28,15 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -47,9 +47,11 @@ import static org.mockito.Mockito.verify;
  * Tests for {@link ServletEndpointRegistrar}.
  *
  * @author Phillip Webb
- * @author Stephane Nicoll
  */
 public class ServletEndpointRegistrarTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Mock
 	private ServletContext servletContext;
@@ -69,44 +71,35 @@ public class ServletEndpointRegistrarTests {
 
 	@Test
 	public void createWhenServletEndpointsIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new ServletEndpointRegistrar(null, null))
-				.withMessageContaining("ServletEndpoints must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("ServletEndpoints must not be null");
+		new ServletEndpointRegistrar(null, null);
 	}
 
 	@Test
-	public void onStartupShouldRegisterServlets() throws ServletException {
-		assertBasePath(null, "/test/*");
-	}
-
-	@Test
-	public void onStartupWhenHasBasePathShouldIncludeBasePath() throws ServletException {
-		assertBasePath("/actuator", "/actuator/test/*");
-	}
-
-	@Test
-	public void onStartupWhenHasEmptyBasePathShouldPrefixWithSlash()
-			throws ServletException {
-		assertBasePath("", "/test/*");
-	}
-
-	@Test
-	public void onStartupWhenHasRootBasePathShouldNotAddDuplicateSlash()
-			throws ServletException {
-		assertBasePath("/", "/test/*");
-	}
-
-	private void assertBasePath(String basePath, String expectedMapping)
-			throws ServletException {
+	public void onStartupShouldRegisterServlets() throws Exception {
 		ExposableServletEndpoint endpoint = mockEndpoint(
 				new EndpointServlet(TestServlet.class));
-		ServletEndpointRegistrar registrar = new ServletEndpointRegistrar(basePath,
+		ServletEndpointRegistrar registrar = new ServletEndpointRegistrar(null,
 				Collections.singleton(endpoint));
 		registrar.onStartup(this.servletContext);
 		verify(this.servletContext).addServlet(eq("test-actuator-endpoint"),
 				this.servlet.capture());
 		assertThat(this.servlet.getValue()).isInstanceOf(TestServlet.class);
-		verify(this.dynamic).addMapping(expectedMapping);
+		verify(this.dynamic).addMapping("/test/*");
+	}
+
+	@Test
+	public void onStartupWhenHasBasePathShouldIncludeBasePath() throws Exception {
+		ExposableServletEndpoint endpoint = mockEndpoint(
+				new EndpointServlet(TestServlet.class));
+		ServletEndpointRegistrar registrar = new ServletEndpointRegistrar("/actuator",
+				Collections.singleton(endpoint));
+		registrar.onStartup(this.servletContext);
+		verify(this.servletContext).addServlet(eq("test-actuator-endpoint"),
+				this.servlet.capture());
+		assertThat(this.servlet.getValue()).isInstanceOf(TestServlet.class);
+		verify(this.dynamic).addMapping("/actuator/test/*");
 	}
 
 	@Test
@@ -122,7 +115,7 @@ public class ServletEndpointRegistrarTests {
 
 	private ExposableServletEndpoint mockEndpoint(EndpointServlet endpointServlet) {
 		ExposableServletEndpoint endpoint = mock(ExposableServletEndpoint.class);
-		given(endpoint.getEndpointId()).willReturn(EndpointId.of("test"));
+		given(endpoint.getId()).willReturn("test");
 		given(endpoint.getEndpointServlet()).willReturn(endpointServlet);
 		given(endpoint.getRootPath()).willReturn("test");
 		return endpoint;
@@ -131,7 +124,8 @@ public class ServletEndpointRegistrarTests {
 	public static class TestServlet extends GenericServlet {
 
 		@Override
-		public void service(ServletRequest req, ServletResponse res) {
+		public void service(ServletRequest req, ServletResponse res)
+				throws ServletException, IOException {
 		}
 
 	}

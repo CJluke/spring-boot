@@ -1,7 +1,11 @@
-plugins {
-	id 'java'
-	id 'org.springframework.boot' version '{version}'
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
 }
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
 
 bootJar {
 	mainClassName = 'com.example.CustomMain'
@@ -22,6 +26,6 @@ repositories {
 }
 
 dependencies {
-	implementation "org.apache.commons:commons-lang3:3.6"
+	compile "org.apache.commons:commons-lang3:3.6"
 	provided "org.apache.commons:commons-lang3:3.6"
 }

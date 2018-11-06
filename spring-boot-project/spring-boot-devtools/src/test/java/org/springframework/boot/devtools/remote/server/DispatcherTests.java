@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -35,7 +37,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.inOrder;
@@ -50,6 +51,9 @@ import static org.mockito.Mockito.withSettings;
  * @author Phillip Webb
  */
 public class DispatcherTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Mock
 	private AccessManager accessManager;
@@ -73,16 +77,16 @@ public class DispatcherTests {
 
 	@Test
 	public void accessManagerMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new Dispatcher(null, Collections.emptyList()))
-				.withMessageContaining("AccessManager must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("AccessManager must not be null");
+		new Dispatcher(null, Collections.emptyList());
 	}
 
 	@Test
 	public void mappersMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new Dispatcher(this.accessManager, null))
-				.withMessageContaining("Mappers must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Mappers must not be null");
+		new Dispatcher(this.accessManager, null);
 	}
 
 	@Test

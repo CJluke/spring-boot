@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.springframework.core.ResolvableType;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link JsonbTester}.
@@ -37,16 +36,16 @@ public class JsonbTesterTests extends AbstractJsonMarshalTesterTests {
 
 	@Test
 	public void initFieldsWhenTestIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> JsonbTester.initFields(null, JsonbBuilder.create()))
-				.withMessageContaining("TestInstance must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("TestInstance must not be null");
+		JsonbTester.initFields(null, JsonbBuilder.create());
 	}
 
 	@Test
 	public void initFieldsWhenMarshallerIsNullShouldThrowException() {
-		assertThatIllegalArgumentException().isThrownBy(
-				() -> JsonbTester.initFields(new InitFieldsTestClass(), (Jsonb) null))
-				.withMessageContaining("Marshaller must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Marshaller must not be null");
+		JsonbTester.initFields(new InitFieldsTestClass(), (Jsonb) null);
 	}
 
 	@Test

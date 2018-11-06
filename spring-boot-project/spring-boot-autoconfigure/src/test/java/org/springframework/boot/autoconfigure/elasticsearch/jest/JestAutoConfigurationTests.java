@@ -25,8 +25,10 @@ import io.searchbox.action.Action;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResult;
 import io.searchbox.client.http.JestHttpClient;
-import io.searchbox.core.Get;
 import io.searchbox.core.Index;
+import io.searchbox.core.Search;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,7 +75,8 @@ public class JestAutoConfigurationTests {
 	@Test
 	public void jestClientOnLocalhostByDefault() {
 		this.contextRunner
-				.run((context) -> assertThat(context).hasSingleBean(JestClient.class));
+				.run((context) -> assertThat(context.getBeansOfType(JestClient.class))
+						.hasSize(1));
 	}
 
 	@Test
@@ -81,7 +84,8 @@ public class JestAutoConfigurationTests {
 		this.contextRunner.withUserConfiguration(CustomJestClient.class)
 				.withPropertyValues(
 						"spring.elasticsearch.jest.uris[0]=http://localhost:9200")
-				.run((context) -> assertThat(context).hasSingleBean(JestClient.class));
+				.run((context) -> assertThat(context.getBeansOfType(JestClient.class))
+						.hasSize(1));
 	}
 
 	@Test
@@ -131,23 +135,18 @@ public class JestAutoConfigurationTests {
 					source.put("a", "alpha");
 					source.put("b", "bravo");
 					Index index = new Index.Builder(source).index("foo").type("bar")
-							.id("1").build();
+							.build();
 					execute(client, index);
-					Get getRequest = new Get.Builder("foo", "1").build();
-					assertThat(execute(client, getRequest).getResponseCode())
-							.isEqualTo(200);
+					SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+					searchSourceBuilder.query(QueryBuilders.matchQuery("a", "alpha"));
+					assertThat(execute(client,
+							new Search.Builder(searchSourceBuilder.toString())
+									.addIndex("foo").build()).getResponseCode())
+											.isEqualTo(200);
 				}));
 	}
 
 	private JestResult execute(JestClient client, Action<? extends JestResult> action) {
-		for (int i = 0; i < 2; i++) {
-			try {
-				return client.execute(action);
-			}
-			catch (IOException ex) {
-				// Continue
-			}
-		}
 		try {
 			return client.execute(action);
 		}

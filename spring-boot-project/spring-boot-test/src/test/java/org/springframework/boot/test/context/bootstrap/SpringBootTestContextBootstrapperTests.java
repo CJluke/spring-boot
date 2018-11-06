@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package org.springframework.boot.test.context.bootstrap;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -25,7 +27,6 @@ import org.springframework.test.context.BootstrapContext;
 import org.springframework.test.context.CacheAwareContextLoaderDelegate;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -36,15 +37,17 @@ import static org.mockito.Mockito.mock;
  */
 public class SpringBootTestContextBootstrapperTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void springBootTestWithANonMockWebEnvironmentAndWebAppConfigurationFailsFast() {
-		assertThatIllegalStateException()
-				.isThrownBy(() -> buildTestContext(
-						SpringBootTestNonMockWebEnvironmentAndWebAppConfiguration.class))
-				.withMessageContaining("@WebAppConfiguration should only be used with "
-						+ "@SpringBootTest when @SpringBootTest is configured with a mock web "
-						+ "environment. Please remove @WebAppConfiguration or reconfigure "
-						+ "@SpringBootTest.");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("@WebAppConfiguration should only be used with "
+				+ "@SpringBootTest when @SpringBootTest is configured with a mock web "
+				+ "environment. Please remove @WebAppConfiguration or reconfigure "
+				+ "@SpringBootTest.");
+		buildTestContext(SpringBootTestNonMockWebEnvironmentAndWebAppConfiguration.class);
 	}
 
 	@Test

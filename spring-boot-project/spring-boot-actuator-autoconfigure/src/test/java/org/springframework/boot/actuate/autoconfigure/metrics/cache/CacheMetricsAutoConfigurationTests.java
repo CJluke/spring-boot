@@ -37,8 +37,7 @@ public class CacheMetricsAutoConfigurationTests {
 
 	private ApplicationContextRunner contextRunner = new ApplicationContextRunner()
 			.with(MetricsRun.simple()).withUserConfiguration(CachingConfiguration.class)
-			.withConfiguration(AutoConfigurations.of(CacheAutoConfiguration.class,
-					CacheMetricsAutoConfiguration.class));
+			.withConfiguration(AutoConfigurations.of(CacheAutoConfiguration.class));
 
 	@Test
 	public void autoConfiguredCacheManagerIsInstrumented() {

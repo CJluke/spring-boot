@@ -19,10 +19,11 @@ package org.springframework.boot.json;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Base for {@link JsonParser} tests.
@@ -32,6 +33,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Stephane Nicoll
  */
 public abstract class AbstractJsonParserTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private final JsonParser parser = getParser();
 
@@ -106,38 +110,38 @@ public abstract class AbstractJsonParserTests {
 
 	@Test
 	public void mapWithNullThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseMap(null));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseMap(null);
 	}
 
 	@Test
 	public void listWithNullThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseList(null));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseList(null);
 	}
 
 	@Test
 	public void mapWithEmptyStringThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseMap(""));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseMap("");
 	}
 
 	@Test
 	public void listWithEmptyStringThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseList(""));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseList("");
 	}
 
 	@Test
 	public void mapWithListThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseMap("[]"));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseMap("[]");
 	}
 
 	@Test
 	public void listWithMapThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseList("{}"));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseList("{}");
 	}
 
 	@Test
@@ -156,21 +160,14 @@ public abstract class AbstractJsonParserTests {
 
 	@Test
 	public void mapWithLeadingWhitespaceListThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseMap("\n\t[]"));
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseMap("\n\t[]");
 	}
 
 	@Test
 	public void listWithLeadingWhitespaceMapThrowsARuntimeException() {
-		assertThatExceptionOfType(RuntimeException.class)
-				.isThrownBy(() -> this.parser.parseList("\n\t{}"));
-	}
-
-	@Test
-	public void escapeDoubleQuote() {
-		String input = "{\"foo\": \"\\\"bar\\\"\"}";
-		Map<String, Object> map = this.parser.parseMap(input);
-		assertThat(map.get("foo")).isEqualTo("\"bar\"");
+		this.thrown.expect(RuntimeException.class);
+		this.parser.parseList("\n\t{}");
 	}
 
 }

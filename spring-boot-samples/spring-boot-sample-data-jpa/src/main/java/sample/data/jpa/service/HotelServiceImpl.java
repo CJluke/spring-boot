@@ -41,7 +41,8 @@ class HotelServiceImpl implements HotelService {
 
 	private final ReviewRepository reviewRepository;
 
-	HotelServiceImpl(HotelRepository hotelRepository, ReviewRepository reviewRepository) {
+	public HotelServiceImpl(HotelRepository hotelRepository,
+			ReviewRepository reviewRepository) {
 		this.hotelRepository = hotelRepository;
 		this.reviewRepository = reviewRepository;
 	}
@@ -81,7 +82,7 @@ class HotelServiceImpl implements HotelService {
 
 		private final Map<Rating, Long> ratingCount;
 
-		ReviewsSummaryImpl(List<RatingCount> ratingCounts) {
+		public ReviewsSummaryImpl(List<RatingCount> ratingCounts) {
 			this.ratingCount = new HashMap<>();
 			for (RatingCount ratingCount : ratingCounts) {
 				this.ratingCount.put(ratingCount.getRating(), ratingCount.getCount());
@@ -91,7 +92,7 @@ class HotelServiceImpl implements HotelService {
 		@Override
 		public long getNumberOfReviewsWithRating(Rating rating) {
 			Long count = this.ratingCount.get(rating);
-			return (count != null) ? count : 0;
+			return count == null ? 0 : count;
 		}
 
 	}

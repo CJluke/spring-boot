@@ -26,7 +26,6 @@ import org.springframework.boot.actuate.autoconfigure.metrics.export.properties.
  * Adapter to convert {@link JmxProperties} to a {@link JmxConfig}.
  *
  * @author Jon Schneider
- * @author Stephane Nicoll
  */
 class JmxPropertiesConfigAdapter extends PropertiesConfigAdapter<JmxProperties>
 		implements JmxConfig {
@@ -38,11 +37,6 @@ class JmxPropertiesConfigAdapter extends PropertiesConfigAdapter<JmxProperties>
 	@Override
 	public String get(String key) {
 		return null;
-	}
-
-	@Override
-	public String domain() {
-		return get(JmxProperties::getDomain, JmxConfig.super::domain);
 	}
 
 	@Override

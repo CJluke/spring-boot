@@ -26,14 +26,14 @@ import org.springframework.util.Assert;
 /**
  * Abstract base class for {@link ExposableEndpoint} implementations.
  *
- * @param <O> the operation type.
+ * @param <O> The operation type.
  * @author Phillip Webb
  * @since 2.0.0
  */
 public abstract class AbstractExposableEndpoint<O extends Operation>
 		implements ExposableEndpoint<O> {
 
-	private final EndpointId id;
+	private final String id;
 
 	private boolean enabledByDefault;
 
@@ -45,7 +45,7 @@ public abstract class AbstractExposableEndpoint<O extends Operation>
 	 * @param enabledByDefault if the endpoint is enabled by default
 	 * @param operations the endpoint operations
 	 */
-	public AbstractExposableEndpoint(EndpointId id, boolean enabledByDefault,
+	public AbstractExposableEndpoint(String id, boolean enabledByDefault,
 			Collection<? extends O> operations) {
 		Assert.notNull(id, "ID must not be null");
 		Assert.notNull(operations, "Operations must not be null");
@@ -55,7 +55,7 @@ public abstract class AbstractExposableEndpoint<O extends Operation>
 	}
 
 	@Override
-	public EndpointId getEndpointId() {
+	public String getId() {
 		return this.id;
 	}
 

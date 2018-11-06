@@ -64,7 +64,7 @@ final class DispatcherServletHandlerMappings {
 			initializeDispatcherServletIfPossible();
 			handlerMappings = this.dispatcherServlet.getHandlerMappings();
 		}
-		return (handlerMappings != null) ? handlerMappings : Collections.emptyList();
+		return handlerMappings == null ? Collections.emptyList() : handlerMappings;
 	}
 
 	private void initializeDispatcherServletIfPossible() {
@@ -109,8 +109,7 @@ final class DispatcherServletHandlerMappings {
 			Container child = context.findChild(name);
 			if (child instanceof StandardWrapper) {
 				try {
-					StandardWrapper wrapper = (StandardWrapper) child;
-					wrapper.deallocate(wrapper.allocate());
+					((StandardWrapper) child).allocate();
 				}
 				catch (ServletException ex) {
 					// Continue

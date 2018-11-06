@@ -147,8 +147,9 @@ public abstract class AutoConfigurationPackages {
 			this.packageName = ClassUtils.getPackageName(metadata.getClassName());
 		}
 
-		public String getPackageName() {
-			return this.packageName;
+		@Override
+		public int hashCode() {
+			return this.packageName.hashCode();
 		}
 
 		@Override
@@ -159,9 +160,8 @@ public abstract class AutoConfigurationPackages {
 			return this.packageName.equals(((PackageImport) obj).packageName);
 		}
 
-		@Override
-		public int hashCode() {
-			return this.packageName.hashCode();
+		public String getPackageName() {
+			return this.packageName;
 		}
 
 		@Override

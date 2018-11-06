@@ -49,9 +49,8 @@ public final class LambdaSafe {
 
 	static {
 		CLASS_GET_MODULE = ReflectionUtils.findMethod(Class.class, "getModule");
-		MODULE_GET_NAME = (CLASS_GET_MODULE != null)
-				? ReflectionUtils.findMethod(CLASS_GET_MODULE.getReturnType(), "getName")
-				: null;
+		MODULE_GET_NAME = (CLASS_GET_MODULE == null ? null : ReflectionUtils
+				.findMethod(CLASS_GET_MODULE.getReturnType(), "getName"));
 	}
 
 	private LambdaSafe() {
@@ -78,8 +77,8 @@ public final class LambdaSafe {
 	}
 
 	/**
-	 * Start a call to callback instances, dealing with common generic type concerns and
-	 * exceptions.
+	 * Start a call to callback instances, dealing with common generic type
+	 * concerns and exceptions.
 	 * @param callbackType the callback type (a {@link FunctionalInterface functional
 	 * interface})
 	 * @param callbackInstances the callback instances (elements may be lambdas)
@@ -142,9 +141,9 @@ public final class LambdaSafe {
 		}
 
 		/**
-		 * Use a specific filter to determine when a callback should apply. If no explicit
-		 * filter is set filter will be attempted using the generic type on the callback
-		 * type.
+		 * Use a specific filter to determine when a callback should apply. If no
+		 * explicit filter is set filter will be attempted using the generic type on the
+		 * callback type.
 		 * @param filter the filter to use
 		 * @return this instance
 		 */
@@ -187,28 +186,17 @@ public final class LambdaSafe {
 			if (argument == null) {
 				return false;
 			}
-			Class<?> argumentType = argument.getClass();
-			// On Java 8, the message starts with the class name: "java.lang.String cannot
-			// be cast..."
+			Class<? extends Object> argumentType = argument.getClass();
 			if (message.startsWith(argumentType.getName())) {
-				return true;
-			}
-			// On Java 11, the message starts with "class ..." a.k.a. Class.toString()
-			if (message.startsWith(argumentType.toString())) {
-				return true;
-			}
-			// On Java 9, the message used to contain the module name:
-			// "java.base/java.lang.String cannot be cast..."
-			int moduleSeparatorIndex = message.indexOf('/');
-			if (moduleSeparatorIndex != -1 && message.startsWith(argumentType.getName(),
-					moduleSeparatorIndex + 1)) {
 				return true;
 			}
 			if (CLASS_GET_MODULE != null) {
 				Object module = ReflectionUtils.invokeMethod(CLASS_GET_MODULE,
 						argumentType);
 				Object moduleName = ReflectionUtils.invokeMethod(MODULE_GET_NAME, module);
-				return message.startsWith(moduleName + "/" + argumentType.getName());
+				if (message.startsWith(moduleName + "/" + argumentType.getName())) {
+					return true;
+				}
 			}
 			return false;
 		}
@@ -217,10 +205,11 @@ public final class LambdaSafe {
 			if (this.logger.isDebugEnabled()) {
 				Class<?> expectedType = ResolvableType.forClass(this.callbackType)
 						.resolveGeneric();
-				String expectedTypeName = (expectedType != null)
-						? ClassUtils.getShortName(expectedType) + " type" : "type";
-				String message = "Non-matching " + expectedTypeName + " for callback "
-						+ ClassUtils.getShortName(this.callbackType) + ": " + callback;
+				String message = "Non-matching "
+						+ (expectedType == null ? "type"
+								: ClassUtils.getShortName(expectedType) + " type")
+						+ " for callback " + ClassUtils.getShortName(this.callbackType)
+						+ ": " + callback;
 				this.logger.debug(message, ex);
 			}
 		}
@@ -297,11 +286,12 @@ public final class LambdaSafe {
 		 * @param invoker the invoker used to invoke the callback
 		 */
 		public void invoke(Consumer<C> invoker) {
-			this.callbackInstances.forEach((callbackInstance) -> {
-				invoke(callbackInstance, () -> {
-					invoker.accept(callbackInstance);
-					return null;
-				});
+			Function<C, InvocationResult<Void>> mapper = (callbackInstance) -> invoke(
+					callbackInstance, () -> {
+						invoker.accept(callbackInstance);
+						return null;
+					});
+			this.callbackInstances.stream().map(mapper).forEach((result) -> {
 			});
 		}
 
@@ -378,8 +368,7 @@ public final class LambdaSafe {
 	 * The result of a callback which may be a value, {@code null} or absent entirely if
 	 * the callback wasn't suitable. Similar in design to {@link Optional} but allows for
 	 * {@code null} as a valid value.
-	 *
-	 * @param <R> the result type
+	 * @param <R> The result type
 	 */
 	public static final class InvocationResult<R> {
 
@@ -415,7 +404,7 @@ public final class LambdaSafe {
 		 * @return the result of the invocation or the fallback
 		 */
 		public R get(R fallback) {
-			return (this != NONE) ? this.value : fallback;
+			return (this == NONE ? fallback : this.value);
 		}
 
 		/**

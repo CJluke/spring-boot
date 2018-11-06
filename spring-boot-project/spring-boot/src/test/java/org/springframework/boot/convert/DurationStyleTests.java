@@ -19,10 +19,11 @@ package org.springframework.boot.convert;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.Assert.fail;
 
 /**
@@ -32,11 +33,14 @@ import static org.junit.Assert.fail;
  */
 public class DurationStyleTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void detectAndParseWhenValueIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> DurationStyle.detectAndParse(null))
-				.withMessageContaining("Value must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Value must not be null");
+		DurationStyle.detectAndParse(null);
 	}
 
 	@Test
@@ -65,18 +69,6 @@ public class DurationStyleTests {
 		assertThat(DurationStyle.detectAndParse("+10ns")).isEqualTo(Duration.ofNanos(10));
 		assertThat(DurationStyle.detectAndParse("-10ns"))
 				.isEqualTo(Duration.ofNanos(-10));
-	}
-
-	@Test
-	public void detectAndParseWhenSimpleMicrosShouldReturnDuration() {
-		assertThat(DurationStyle.detectAndParse("10us"))
-				.isEqualTo(Duration.ofNanos(10000));
-		assertThat(DurationStyle.detectAndParse("10US"))
-				.isEqualTo(Duration.ofNanos(10000));
-		assertThat(DurationStyle.detectAndParse("+10us"))
-				.isEqualTo(Duration.ofNanos(10000));
-		assertThat(DurationStyle.detectAndParse("-10us"))
-				.isEqualTo(Duration.ofNanos(-10000));
 	}
 
 	@Test
@@ -144,9 +136,9 @@ public class DurationStyleTests {
 
 	@Test
 	public void detectAndParseWhenBadFormatShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> DurationStyle.detectAndParse("10foo"))
-				.withMessageContaining("'10foo' is not a valid duration");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("'10foo' is not a valid duration");
+		DurationStyle.detectAndParse("10foo");
 	}
 
 	@Test
@@ -179,8 +171,9 @@ public class DurationStyleTests {
 
 	@Test
 	public void detectWhenUnknownShouldThrowException() {
-		assertThatIllegalArgumentException().isThrownBy(() -> DurationStyle.detect("bad"))
-				.withMessageContaining("'bad' is not a valid duration");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("'bad' is not a valid duration");
+		DurationStyle.detect("bad");
 	}
 
 	@Test
@@ -223,9 +216,9 @@ public class DurationStyleTests {
 
 	@Test
 	public void parseIso8601WhenSimpleShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> DurationStyle.ISO8601.parse("10d"))
-				.withMessageContaining("'10d' is not a valid ISO-8601 duration");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("'10d' is not a valid ISO-8601 duration");
+		DurationStyle.ISO8601.parse("10d");
 	}
 
 	@Test
@@ -254,9 +247,9 @@ public class DurationStyleTests {
 
 	@Test
 	public void parseSimpleWhenIso8601ShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> DurationStyle.SIMPLE.parse("PT10H"))
-				.withMessageContaining("'PT10H' is not a valid simple duration");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("'PT10H' is not a valid simple duration");
+		DurationStyle.SIMPLE.parse("PT10H");
 	}
 
 	@Test

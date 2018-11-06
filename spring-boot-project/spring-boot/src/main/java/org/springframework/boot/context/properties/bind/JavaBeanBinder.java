@@ -29,7 +29,6 @@ import java.util.function.Supplier;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.context.properties.bind.Binder.Context;
 import org.springframework.boot.context.properties.source.ConfigurationPropertyName;
-import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
 import org.springframework.boot.context.properties.source.ConfigurationPropertyState;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
@@ -45,7 +44,8 @@ class JavaBeanBinder implements BeanBinder {
 	@Override
 	public <T> T bind(ConfigurationPropertyName name, Bindable<T> target, Context context,
 			BeanPropertyBinder propertyBinder) {
-		boolean hasKnownBindableProperties = hasKnownBindableProperties(name, context);
+		boolean hasKnownBindableProperties = context.streamSources().anyMatch((
+				s) -> s.containsDescendantOf(name) == ConfigurationPropertyState.PRESENT);
 		Bean<T> bean = Bean.get(target, hasKnownBindableProperties);
 		if (bean == null) {
 			return null;
@@ -53,16 +53,6 @@ class JavaBeanBinder implements BeanBinder {
 		BeanSupplier<T> beanSupplier = bean.getSupplier(target);
 		boolean bound = bind(propertyBinder, bean, beanSupplier);
 		return (bound ? beanSupplier.get() : null);
-	}
-
-	private boolean hasKnownBindableProperties(ConfigurationPropertyName name,
-			Context context) {
-		for (ConfigurationPropertySource source : context.getSources()) {
-			if (source.containsDescendantOf(name) == ConfigurationPropertyState.PRESENT) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private <T> boolean bind(BeanPropertyBinder propertyBinder, Bean<T> bean,
@@ -194,7 +184,7 @@ class JavaBeanBinder implements BeanBinder {
 			T instance = null;
 			if (canCallGetValue && value != null) {
 				instance = value.get();
-				type = (instance != null) ? instance.getClass() : type;
+				type = (instance != null ? instance.getClass() : type);
 			}
 			if (instance == null && !isInstantiable(type)) {
 				return null;
@@ -297,7 +287,7 @@ class JavaBeanBinder implements BeanBinder {
 
 		public Annotation[] getAnnotations() {
 			try {
-				return (this.field != null) ? this.field.getDeclaredAnnotations() : null;
+				return (this.field == null ? null : this.field.getDeclaredAnnotations());
 			}
 			catch (Exception ex) {
 				return null;

@@ -45,7 +45,7 @@ class SpringBootJoranConfigurator extends JoranConfigurator {
 		rs.addRule(new ElementSelector("configuration/springProperty"),
 				new SpringPropertyAction(environment));
 		rs.addRule(new ElementSelector("*/springProfile"),
-				new SpringProfileAction(environment));
+				new SpringProfileAction(this.initializationContext.getEnvironment()));
 		rs.addRule(new ElementSelector("*/springProfile/*"), new NOPAction());
 	}
 

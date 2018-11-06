@@ -25,16 +25,15 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 
 /**
- * Intercepts incoming HTTP requests handled by Spring WebFlux handlers.
+ * Intercepts incoming HTTP requests modeled with the Webflux annotation-based programming
+ * model.
  *
  * @author Jon Schneider
- * @author Brian Clozel
  * @since 2.0.0
  */
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
@@ -46,52 +45,22 @@ public class MetricsWebFilter implements WebFilter {
 
 	private final String metricName;
 
-	private final boolean autoTimeRequests;
-
-	/**
-	 * Create a new {@code MetricsWebFilter}.
-	 * @param registry the registry to which metrics are recorded
-	 * @param tagsProvider provider for metrics tags
-	 * @param metricName name of the metric to record
-	 * @deprecated since 2.0.6 in favor of
-	 * {@link #MetricsWebFilter(MeterRegistry, WebFluxTagsProvider, String, boolean)}
-	 */
-	@Deprecated
 	public MetricsWebFilter(MeterRegistry registry, WebFluxTagsProvider tagsProvider,
 			String metricName) {
-		this(registry, tagsProvider, metricName, true);
-	}
-
-	public MetricsWebFilter(MeterRegistry registry, WebFluxTagsProvider tagsProvider,
-			String metricName, boolean autoTimeRequests) {
 		this.registry = registry;
 		this.tagsProvider = tagsProvider;
 		this.metricName = metricName;
-		this.autoTimeRequests = autoTimeRequests;
 	}
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-		if (this.autoTimeRequests) {
-			return chain.filter(exchange).compose((call) -> filter(exchange, call));
-		}
-		return chain.filter(exchange);
+		return chain.filter(exchange).compose((call) -> filter(exchange, call));
 	}
 
 	private Publisher<Void> filter(ServerWebExchange exchange, Mono<Void> call) {
 		long start = System.nanoTime();
-		ServerHttpResponse response = exchange.getResponse();
-		return call.doOnSuccess((done) -> success(exchange, start)).doOnError((cause) -> {
-			if (response.isCommitted()) {
-				error(exchange, start, cause);
-			}
-			else {
-				response.beforeCommit(() -> {
-					error(exchange, start, cause);
-					return Mono.empty();
-				});
-			}
-		});
+		return call.doOnSuccess((done) -> success(exchange, start))
+				.doOnError((cause) -> error(exchange, start, cause));
 	}
 
 	private void success(ServerWebExchange exchange, long start) {

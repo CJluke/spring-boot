@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package org.springframework.boot.origin;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link SystemEnvironmentOrigin}.
@@ -28,16 +29,19 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  */
 public class SystemEnvironmentOriginTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void createWhenPropertyIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new SystemEnvironmentOrigin(null));
+		this.thrown.expect(IllegalArgumentException.class);
+		new SystemEnvironmentOrigin(null);
 	}
 
 	@Test
 	public void createWhenPropertyNameIsEmptyShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new SystemEnvironmentOrigin(""));
+		this.thrown.expect(IllegalArgumentException.class);
+		new SystemEnvironmentOrigin("");
 	}
 
 	@Test
@@ -52,5 +56,4 @@ public class SystemEnvironmentOriginTests {
 		assertThat(origin.toString())
 				.isEqualTo("System Environment Property \"FOO_BAR\"");
 	}
-
 }

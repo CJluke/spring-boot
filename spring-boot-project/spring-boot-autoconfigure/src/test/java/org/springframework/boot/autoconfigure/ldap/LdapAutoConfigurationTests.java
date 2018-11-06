@@ -20,14 +20,8 @@ import org.junit.Test;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.ldap.core.ContextSource;
-import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
-import org.springframework.ldap.pool2.factory.PoolConfig;
-import org.springframework.ldap.pool2.factory.PooledContextSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Eddú Meléndez
  * @author Stephane Nicoll
- * @author Vedran Pavic
  */
 public class LdapAutoConfigurationTests {
 
@@ -48,7 +41,8 @@ public class LdapAutoConfigurationTests {
 	public void contextSourceWithDefaultUrl() {
 		this.contextRunner.run((context) -> {
 			LdapContextSource contextSource = context.getBean(LdapContextSource.class);
-			String[] urls = getUrls(contextSource);
+			String[] urls = (String[]) ReflectionTestUtils.getField(contextSource,
+					"urls");
 			assertThat(urls).containsExactly("ldap://localhost:389");
 			assertThat(contextSource.isAnonymousReadOnly()).isFalse();
 		});
@@ -58,9 +52,9 @@ public class LdapAutoConfigurationTests {
 	public void contextSourceWithSingleUrl() {
 		this.contextRunner.withPropertyValues("spring.ldap.urls:ldap://localhost:123")
 				.run((context) -> {
-					ContextSource contextSource = context
-							.getBean(LdapContextSource.class);
-					String[] urls = getUrls(contextSource);
+					ContextSource contextSource = context.getBean(ContextSource.class);
+					String[] urls = (String[]) ReflectionTestUtils.getField(contextSource,
+							"urls");
 					assertThat(urls).containsExactly("ldap://localhost:123");
 				});
 	}
@@ -71,10 +65,10 @@ public class LdapAutoConfigurationTests {
 				.withPropertyValues(
 						"spring.ldap.urls:ldap://localhost:123,ldap://mycompany:123")
 				.run((context) -> {
-					ContextSource contextSource = context
-							.getBean(LdapContextSource.class);
+					ContextSource contextSource = context.getBean(ContextSource.class);
 					LdapProperties ldapProperties = context.getBean(LdapProperties.class);
-					String[] urls = getUrls(contextSource);
+					String[] urls = (String[]) ReflectionTestUtils.getField(contextSource,
+							"urls");
 					assertThat(urls).containsExactly("ldap://localhost:123",
 							"ldap://mycompany:123");
 					assertThat(ldapProperties.getUrls()).hasSize(2);
@@ -100,43 +94,6 @@ public class LdapAutoConfigurationTests {
 					assertThat(ldapProperties.getBaseEnvironment()).containsEntry(
 							"java.naming.security.authentication", "DIGEST-MD5");
 				});
-	}
-
-	@Test
-	public void templateExists() {
-		this.contextRunner.withPropertyValues("spring.ldap.urls:ldap://localhost:389")
-				.run((context) -> assertThat(context).hasSingleBean(LdapTemplate.class));
-	}
-
-	@Test
-	public void contextSourceWithUserProvidedPooledContextSource() {
-		this.contextRunner.withUserConfiguration(PooledContextSourceConfig.class)
-				.run((context) -> {
-					LdapContextSource contextSource = context
-							.getBean(LdapContextSource.class);
-					String[] urls = getUrls(contextSource);
-					assertThat(urls).containsExactly("ldap://localhost:389");
-					assertThat(contextSource.isAnonymousReadOnly()).isFalse();
-				});
-	}
-
-	private String[] getUrls(ContextSource contextSource) {
-		return (String[]) ReflectionTestUtils.getField(contextSource, "urls");
-	}
-
-	@Configuration
-	static class PooledContextSourceConfig {
-
-		@Bean
-		@Primary
-		public PooledContextSource pooledContextSource(
-				LdapContextSource ldapContextSource) {
-			PooledContextSource pooledContextSource = new PooledContextSource(
-					new PoolConfig());
-			pooledContextSource.setContextSource(ldapContextSource);
-			return pooledContextSource;
-		}
-
 	}
 
 }

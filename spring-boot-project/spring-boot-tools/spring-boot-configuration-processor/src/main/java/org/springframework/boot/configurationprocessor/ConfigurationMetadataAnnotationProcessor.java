@@ -20,7 +20,9 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,7 +63,6 @@ import org.springframework.boot.configurationprocessor.metadata.ItemMetadata;
  * @author Stephane Nicoll
  * @author Phillip Webb
  * @author Kris De Volder
- * @author Jonas Keßler
  * @since 1.2.0
  */
 @SupportedAnnotationTypes({ "*" })
@@ -93,10 +94,8 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 
 	static final String LOMBOK_SETTER_ANNOTATION = "lombok.Setter";
 
-	static final String LOMBOK_ACCESS_LEVEL_PUBLIC = "PUBLIC";
-
-	private static final Set<String> SUPPORTED_OPTIONS = Collections
-			.unmodifiableSet(Collections.singleton(ADDITIONAL_METADATA_LOCATIONS_OPTION));
+	private static final Set<String> SUPPORTED_OPTIONS = Collections.unmodifiableSet(
+			new HashSet<>(Arrays.asList(ADDITIONAL_METADATA_LOCATIONS_OPTION)));
 
 	private MetadataStore metadataStore;
 
@@ -300,7 +299,7 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 						|| isDeprecated(source);
 				this.metadataCollector.add(ItemMetadata.newProperty(prefix, name,
 						dataType, sourceType, null, description, defaultValue,
-						deprecated ? getItemDeprecation(getter) : null));
+						(deprecated ? getItemDeprecation(getter) : null)));
 			}
 		});
 	}
@@ -315,9 +314,8 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 			reason = (String) elementValues.get("reason");
 			replacement = (String) elementValues.get("replacement");
 		}
-		reason = "".equals(reason) ? null : reason;
-		replacement = "".equals(replacement) ? null : replacement;
-		return new ItemDeprecation(reason, replacement);
+		return new ItemDeprecation(("".equals(reason) ? null : reason),
+				("".equals(replacement) ? null : replacement));
 	}
 
 	private void processSimpleLombokTypes(String prefix, TypeElement element,
@@ -342,7 +340,7 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 				boolean deprecated = isDeprecated(field) || isDeprecated(source);
 				this.metadataCollector.add(ItemMetadata.newProperty(prefix, name,
 						dataType, sourceType, null, description, defaultValue,
-						deprecated ? new ItemDeprecation() : null));
+						(deprecated ? new ItemDeprecation() : null)));
 			}
 		});
 	}
@@ -368,43 +366,16 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 	}
 
 	private boolean isLombokField(VariableElement field, TypeElement element) {
-		return hasLombokPublicAccessor(field, element, true);
+		return hasAnnotation(field, LOMBOK_GETTER_ANNOTATION)
+				|| hasAnnotation(element, LOMBOK_GETTER_ANNOTATION)
+				|| hasAnnotation(element, LOMBOK_DATA_ANNOTATION);
 	}
 
 	private boolean hasLombokSetter(VariableElement field, TypeElement element) {
 		return !field.getModifiers().contains(Modifier.FINAL)
-				&& hasLombokPublicAccessor(field, element, false);
-	}
-
-	/**
-	 * Determine if the specified {@link VariableElement field} defines a public accessor
-	 * using lombok annotations.
-	 * @param field the field to inspect
-	 * @param element the parent element of the field (i.e. its holding class)
-	 * @param getter {@code true} to look for the read accessor, {@code false} for the
-	 * write accessor
-	 * @return {@code true} if this field has a public accessor of the specified type
-	 */
-	private boolean hasLombokPublicAccessor(VariableElement field, TypeElement element,
-			boolean getter) {
-		String annotation = (getter ? LOMBOK_GETTER_ANNOTATION
-				: LOMBOK_SETTER_ANNOTATION);
-		AnnotationMirror lombokMethodAnnotationOnField = getAnnotation(field, annotation);
-		if (lombokMethodAnnotationOnField != null) {
-			return isAccessLevelPublic(lombokMethodAnnotationOnField);
-		}
-		AnnotationMirror lombokMethodAnnotationOnElement = getAnnotation(element,
-				annotation);
-		if (lombokMethodAnnotationOnElement != null) {
-			return isAccessLevelPublic(lombokMethodAnnotationOnElement);
-		}
-		return hasAnnotation(element, LOMBOK_DATA_ANNOTATION);
-	}
-
-	private boolean isAccessLevelPublic(AnnotationMirror lombokAnnotation) {
-		Map<String, Object> values = getAnnotationElementValues(lombokAnnotation);
-		Object value = values.get("value");
-		return (value == null || value.toString().equals(LOMBOK_ACCESS_LEVEL_PUBLIC));
+				&& (hasAnnotation(field, LOMBOK_SETTER_ANNOTATION)
+						|| hasAnnotation(element, LOMBOK_SETTER_ANNOTATION)
+						|| hasAnnotation(element, LOMBOK_DATA_ANNOTATION));
 	}
 
 	private void processNestedType(String prefix, TypeElement element,
@@ -419,7 +390,7 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 			this.metadataCollector.add(ItemMetadata.newGroup(nestedPrefix,
 					this.typeUtils.getQualifiedName(returnElement),
 					this.typeUtils.getQualifiedName(element),
-					(getter != null) ? getter.toString() : null));
+					(getter == null ? null : getter.toString())));
 			processTypeElement(nestedPrefix, (TypeElement) returnElement, source);
 		}
 	}
@@ -452,7 +423,7 @@ public class ConfigurationMetadataAnnotationProcessor extends AbstractProcessor 
 		this.metadataCollector.add(ItemMetadata.newProperty(endpointKey, "enabled",
 				Boolean.class.getName(), type, null,
 				String.format("Whether to enable the %s endpoint.", endpointId),
-				(enabledByDefault != null) ? enabledByDefault : true, null));
+				(enabledByDefault == null ? true : enabledByDefault), null));
 		if (hasMainReadOperation(element)) {
 			this.metadataCollector.add(ItemMetadata.newProperty(endpointKey,
 					"cache.time-to-live", Duration.class.getName(), type, null,

@@ -74,14 +74,14 @@ class TypeExcludeFiltersContextCustomizer implements ContextCustomizer {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return (obj != null && getClass() == obj.getClass() && this.filters
-				.equals(((TypeExcludeFiltersContextCustomizer) obj).filters));
+	public int hashCode() {
+		return this.filters.hashCode();
 	}
 
 	@Override
-	public int hashCode() {
-		return this.filters.hashCode();
+	public boolean equals(Object obj) {
+		return (obj != null && getClass() == obj.getClass() && this.filters
+				.equals(((TypeExcludeFiltersContextCustomizer) obj).filters));
 	}
 
 	@Override

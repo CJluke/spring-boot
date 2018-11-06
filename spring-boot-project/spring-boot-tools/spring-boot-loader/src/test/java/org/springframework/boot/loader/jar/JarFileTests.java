@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilePermission;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -35,6 +36,7 @@ import java.util.zip.ZipFile;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import org.springframework.boot.loader.TestJarCreator;
@@ -43,8 +45,6 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StreamUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -60,6 +60,9 @@ public class JarFileTests {
 	private static final String PROTOCOL_HANDLER = "java.protocol.handler.pkgs";
 
 	private static final String HANDLERS_PACKAGE = "org.springframework.boot.loader";
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -228,15 +231,16 @@ public class JarFileTests {
 		URL url = new URL(this.jarFile.getUrl(), "missing.dat");
 		assertThat(url.toString())
 				.isEqualTo("jar:" + this.rootJarFile.toURI() + "!/missing.dat");
-		assertThatExceptionOfType(FileNotFoundException.class)
-				.isThrownBy(((JarURLConnection) url.openConnection())::getJarEntry);
+		this.thrown.expect(FileNotFoundException.class);
+		((JarURLConnection) url.openConnection()).getJarEntry();
 	}
 
 	@Test
 	public void getUrlStream() throws Exception {
 		URL url = this.jarFile.getUrl();
 		url.openConnection();
-		assertThatIOException().isThrownBy(url::openStream);
+		this.thrown.expect(IOException.class);
+		url.openStream();
 	}
 
 	@Test
@@ -428,8 +432,8 @@ public class JarFileTests {
 				.getNestedJarFile(this.jarFile.getEntry("nested.jar"));
 		URL nestedUrl = nestedJarFile.getUrl();
 		URL url = new URL(nestedUrl, nestedJarFile.getUrl() + "missing.jar!/3.dat");
-		assertThatExceptionOfType(FileNotFoundException.class)
-				.isThrownBy(url.openConnection()::getInputStream);
+		this.thrown.expect(FileNotFoundException.class);
+		url.openConnection().getInputStream();
 	}
 
 	@Test
@@ -490,9 +494,9 @@ public class JarFileTests {
 			URL context = nested.getUrl();
 			new URL(context, "jar:" + this.rootJarFile.toURI() + "!/nested.jar!/3.dat")
 					.openConnection().getInputStream().close();
-			assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(
-					new URL(context, "jar:" + this.rootJarFile.toURI() + "!/no.dat")
-							.openConnection()::getInputStream);
+			this.thrown.expect(FileNotFoundException.class);
+			new URL(context, "jar:" + this.rootJarFile.toURI() + "!/no.dat")
+					.openConnection().getInputStream().close();
 		}
 		finally {
 			JarURLConnection.setUseFastExceptions(false);

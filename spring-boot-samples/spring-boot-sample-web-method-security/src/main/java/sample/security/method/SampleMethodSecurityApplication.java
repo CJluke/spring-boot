@@ -42,6 +42,20 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SampleMethodSecurityApplication implements WebMvcConfigurer {
 
+	@Controller
+	protected static class HomeController {
+
+		@GetMapping("/")
+		@Secured("ROLE_ADMIN")
+		public String home(Map<String, Object> model) {
+			model.put("message", "Hello World");
+			model.put("title", "Hello Home");
+			model.put("date", new Date());
+			return "home";
+		}
+
+	}
+
 	@Override
 	public void addViewControllers(ViewControllerRegistry registry) {
 		registry.addViewController("/login").setViewName("login");
@@ -100,20 +114,6 @@ public class SampleMethodSecurityApplication implements WebMvcConfigurer {
 					.and()
 				.httpBasic();
 			// @formatter:on
-		}
-
-	}
-
-	@Controller
-	protected static class HomeController {
-
-		@GetMapping("/")
-		@Secured("ROLE_ADMIN")
-		public String home(Map<String, Object> model) {
-			model.put("message", "Hello World");
-			model.put("title", "Hello Home");
-			model.put("date", new Date());
-			return "home";
 		}
 
 	}

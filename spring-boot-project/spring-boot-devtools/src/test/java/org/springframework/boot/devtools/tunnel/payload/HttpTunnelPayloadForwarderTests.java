@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Tests for {@link HttpTunnelPayloadForwarder}.
@@ -34,11 +34,14 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
  */
 public class HttpTunnelPayloadForwarderTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void targetChannelMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new HttpTunnelPayloadForwarder(null))
-				.withMessageContaining("TargetChannel must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("TargetChannel must not be null");
+		new HttpTunnelPayloadForwarder(null);
 	}
 
 	@Test
@@ -67,11 +70,11 @@ public class HttpTunnelPayloadForwarderTests {
 	public void overflow() throws Exception {
 		WritableByteChannel channel = Channels.newChannel(new ByteArrayOutputStream());
 		HttpTunnelPayloadForwarder forwarder = new HttpTunnelPayloadForwarder(channel);
-		assertThatIllegalStateException().isThrownBy(() -> {
-			for (int i = 2; i < 130; i++) {
-				forwarder.forward(payload(i, "data" + i));
-			}
-		}).withMessageContaining("Too many messages queued");
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("Too many messages queued");
+		for (int i = 2; i < 130; i++) {
+			forwarder.forward(payload(i, "data" + i));
+		}
 	}
 
 	private HttpTunnelPayload payload(long sequence, String data) {

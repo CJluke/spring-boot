@@ -16,6 +16,7 @@
 
 package org.springframework.boot.autoconfigure;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,28 +40,14 @@ import org.springframework.http.converter.support.AllEncompassingFormHttpMessage
 /**
  * {@link ApplicationListener} to trigger early initialization in a background thread of
  * time consuming tasks.
- * <p>
- * Set the {@link #IGNORE_BACKGROUNDPREINITIALIZER_PROPERTY_NAME} system property to
- * {@code true} to disable this mechanism and let such initialization happen in the
- * foreground.
  *
  * @author Phillip Webb
  * @author Andy Wilkinson
- * @author Artsiom Yudovin
  * @since 1.3.0
  */
 @Order(LoggingApplicationListener.DEFAULT_ORDER + 1)
 public class BackgroundPreinitializer
 		implements ApplicationListener<SpringApplicationEvent> {
-
-	/**
-	 * System property that instructs Spring Boot how to run pre initialization. When the
-	 * property is set to {@code true}, no pre-initialization happens and each item is
-	 * initialized in the foreground as it needs to. When the property is {@code false}
-	 * (default), pre initialization runs in a separate thread in the background.
-	 * @since 2.1.0
-	 */
-	public static final String IGNORE_BACKGROUNDPREINITIALIZER_PROPERTY_NAME = "spring.backgroundpreinitializer.ignore";
 
 	private static final AtomicBoolean preinitializationStarted = new AtomicBoolean(
 			false);
@@ -69,8 +56,7 @@ public class BackgroundPreinitializer
 
 	@Override
 	public void onApplicationEvent(SpringApplicationEvent event) {
-		if (!Boolean.getBoolean(IGNORE_BACKGROUNDPREINITIALIZER_PROPERTY_NAME)
-				&& event instanceof ApplicationStartingEvent
+		if (event instanceof ApplicationStartingEvent
 				&& preinitializationStarted.compareAndSet(false, true)) {
 			performPreinitialization();
 		}
@@ -187,6 +173,7 @@ public class BackgroundPreinitializer
 		@Override
 		public void run() {
 			StandardCharsets.UTF_8.name();
+			Charset.availableCharsets();
 		}
 
 	}

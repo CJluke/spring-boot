@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -29,7 +31,6 @@ import org.springframework.boot.cli.command.core.HelpCommand;
 import org.springframework.boot.cli.command.core.HintCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
@@ -42,10 +43,16 @@ import static org.mockito.Mockito.verify;
  */
 public class CommandRunnerTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	private CommandRunner commandRunner;
 
 	@Mock
 	private Command regularCommand;
+
+	@Mock
+	private Command shellCommand;
 
 	@Mock
 	private Command anotherCommand;
@@ -94,8 +101,8 @@ public class CommandRunnerTests {
 
 	@Test
 	public void runWithoutArguments() throws Exception {
-		assertThatExceptionOfType(NoArgumentsException.class)
-				.isThrownBy(this.commandRunner::run);
+		this.thrown.expect(NoArgumentsException.class);
+		this.commandRunner.run();
 	}
 
 	@Test
@@ -106,8 +113,8 @@ public class CommandRunnerTests {
 
 	@Test
 	public void missingCommand() throws Exception {
-		assertThatExceptionOfType(NoSuchCommandException.class)
-				.isThrownBy(() -> this.commandRunner.run("missing"));
+		this.thrown.expect(NoSuchCommandException.class);
+		this.commandRunner.run("missing");
 	}
 
 	@Test
@@ -181,14 +188,14 @@ public class CommandRunnerTests {
 
 	@Test
 	public void helpNoCommand() throws Exception {
-		assertThatExceptionOfType(NoHelpCommandArgumentsException.class)
-				.isThrownBy(() -> this.commandRunner.run("help"));
+		this.thrown.expect(NoHelpCommandArgumentsException.class);
+		this.commandRunner.run("help");
 	}
 
 	@Test
 	public void helpUnknownCommand() throws Exception {
-		assertThatExceptionOfType(NoSuchCommandException.class)
-				.isThrownBy(() -> this.commandRunner.run("help", "missing"));
+		this.thrown.expect(NoSuchCommandException.class);
+		this.commandRunner.run("help", "missing");
 	}
 
 	private enum Call {

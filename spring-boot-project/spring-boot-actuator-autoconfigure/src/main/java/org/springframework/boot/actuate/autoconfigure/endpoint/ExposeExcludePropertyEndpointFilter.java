@@ -20,13 +20,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.actuate.endpoint.EndpointFilter;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.ExposableEndpoint;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
@@ -37,7 +36,7 @@ import org.springframework.util.Assert;
  * {@link EndpointFilter} that will filter endpoints based on {@code include} and
  * {@code exclude} properties.
  *
- * @param <E> the endpoint type
+ * @param <E> The endpoint type
  * @author Phillip Webb
  * @since 2.0.0
  */
@@ -75,17 +74,8 @@ public class ExposeExcludePropertyEndpointFilter<E extends ExposableEndpoint<?>>
 	}
 
 	private Set<String> bind(Binder binder, String name) {
-		return asSet(binder.bind(name, Bindable.listOf(String.class)).map(this::cleanup)
+		return asSet(binder.bind(name, Bindable.listOf(String.class))
 				.orElseGet(ArrayList::new));
-	}
-
-	private List<String> cleanup(List<String> values) {
-		return values.stream().map(this::cleanup).collect(Collectors.toList());
-	}
-
-	private String cleanup(String value) {
-		return "*".equals(value) ? "*"
-				: EndpointId.fromPropertyValue(value).toLowerCaseString();
 	}
 
 	private Set<String> asSet(Collection<String> items) {
@@ -93,7 +83,7 @@ public class ExposeExcludePropertyEndpointFilter<E extends ExposableEndpoint<?>>
 			return Collections.emptySet();
 		}
 		return items.stream().map((item) -> item.toLowerCase(Locale.ENGLISH))
-				.collect(Collectors.toSet());
+				.collect(Collectors.toCollection(HashSet::new));
 	}
 
 	@Override
@@ -120,7 +110,7 @@ public class ExposeExcludePropertyEndpointFilter<E extends ExposableEndpoint<?>>
 	}
 
 	private boolean contains(Set<String> items, ExposableEndpoint<?> endpoint) {
-		return items.contains(endpoint.getEndpointId().toLowerCaseString());
+		return items.contains(endpoint.getId().toLowerCase(Locale.ENGLISH));
 	}
 
 }

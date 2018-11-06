@@ -35,14 +35,10 @@ import org.springframework.boot.devtools.livereload.LiveReloadServer;
 import org.springframework.boot.devtools.restart.ConditionalOnInitializedRestarter;
 import org.springframework.boot.devtools.restart.RestartScope;
 import org.springframework.boot.devtools.restart.Restarter;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.GenericApplicationListener;
-import org.springframework.core.ResolvableType;
-import org.springframework.lang.Nullable;
+import org.springframework.context.event.EventListener;
 import org.springframework.util.StringUtils;
 
 /**
@@ -98,8 +94,7 @@ public class LocalDevToolsAutoConfiguration {
 	 */
 	@Configuration
 	@ConditionalOnProperty(prefix = "spring.devtools.restart", name = "enabled", matchIfMissing = true)
-	static class RestartConfiguration
-			implements ApplicationListener<ClassPathChangedEvent> {
+	static class RestartConfiguration {
 
 		private final DevToolsProperties properties;
 
@@ -107,8 +102,8 @@ public class LocalDevToolsAutoConfiguration {
 			this.properties = properties;
 		}
 
-		@Override
-		public void onApplicationEvent(ClassPathChangedEvent event) {
+		@EventListener
+		public void onClassPathChanged(ClassPathChangedEvent event) {
 			if (event.isRestartRequired()) {
 				Restarter.getInstance().restart(
 						new FileWatchingFailureHandler(fileSystemWatcherFactory()));
@@ -166,7 +161,7 @@ public class LocalDevToolsAutoConfiguration {
 
 	}
 
-	static class LiveReloadServerEventListener implements GenericApplicationListener {
+	static class LiveReloadServerEventListener {
 
 		private final OptionalLiveReloadServer liveReloadServer;
 
@@ -174,33 +169,16 @@ public class LocalDevToolsAutoConfiguration {
 			this.liveReloadServer = liveReloadServer;
 		}
 
-		@Override
-		public boolean supportsEventType(ResolvableType eventType) {
-			Class<?> type = eventType.getRawClass();
-			if (type == null) {
-				return false;
-			}
-			return ContextRefreshedEvent.class.isAssignableFrom(type)
-					|| ClassPathChangedEvent.class.isAssignableFrom(type);
+		@EventListener
+		public void onContextRefreshed(ContextRefreshedEvent event) {
+			this.liveReloadServer.triggerReload();
 		}
 
-		@Override
-		public boolean supportsSourceType(@Nullable Class<?> sourceType) {
-			return true;
-		}
-
-		@Override
-		public void onApplicationEvent(ApplicationEvent event) {
-			if (event instanceof ContextRefreshedEvent
-					|| (event instanceof ClassPathChangedEvent
-							&& !((ClassPathChangedEvent) event).isRestartRequired())) {
+		@EventListener
+		public void onClassPathChanged(ClassPathChangedEvent event) {
+			if (!event.isRestartRequired()) {
 				this.liveReloadServer.triggerReload();
 			}
-		}
-
-		@Override
-		public int getOrder() {
-			return 0;
 		}
 
 	}

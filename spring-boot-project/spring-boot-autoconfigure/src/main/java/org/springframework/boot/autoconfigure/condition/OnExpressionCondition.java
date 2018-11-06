@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
  * A Condition that evaluates a SpEL expression.
  *
  * @author Dave Syer
- * @author Stephane Nicoll
  * @see ConditionalOnExpression
  */
 @Order(Ordered.LOWEST_PRECEDENCE - 20)
@@ -42,28 +41,21 @@ class OnExpressionCondition extends SpringBootCondition {
 				.getAnnotationAttributes(ConditionalOnExpression.class.getName())
 				.get("value");
 		expression = wrapIfNecessary(expression);
-		ConditionMessage.Builder messageBuilder = ConditionMessage
-				.forCondition(ConditionalOnExpression.class, "(" + expression + ")");
+		String rawExpression = expression;
 		expression = context.getEnvironment().resolvePlaceholders(expression);
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
-		if (beanFactory != null) {
-			boolean result = evaluateExpression(beanFactory, expression);
-			return new ConditionOutcome(result, messageBuilder.resultedIn(result));
-		}
-		return ConditionOutcome
-				.noMatch(messageBuilder.because("no BeanFactory available."));
-	}
-
-	private Boolean evaluateExpression(ConfigurableListableBeanFactory beanFactory,
-			String expression) {
-		BeanExpressionResolver resolver = beanFactory.getBeanExpressionResolver();
+		BeanExpressionResolver resolver = (beanFactory != null)
+				? beanFactory.getBeanExpressionResolver() : null;
+		BeanExpressionContext expressionContext = (beanFactory != null)
+				? new BeanExpressionContext(beanFactory, null) : null;
 		if (resolver == null) {
 			resolver = new StandardBeanExpressionResolver();
 		}
-		BeanExpressionContext expressionContext = new BeanExpressionContext(beanFactory,
-				null);
 		Object result = resolver.evaluate(expression, expressionContext);
-		return (result != null && (boolean) result);
+		boolean match = result != null && (boolean) result;
+		return new ConditionOutcome(match, ConditionMessage
+				.forCondition(ConditionalOnExpression.class, "(" + rawExpression + ")")
+				.resultedIn(result));
 	}
 
 	/**

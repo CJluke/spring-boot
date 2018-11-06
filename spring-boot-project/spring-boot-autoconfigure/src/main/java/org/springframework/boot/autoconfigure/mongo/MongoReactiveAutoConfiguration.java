@@ -16,15 +16,14 @@
 
 package org.springframework.boot.autoconfigure.mongo;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 import javax.annotation.PreDestroy;
 
-import com.mongodb.MongoClientSettings;
+import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.reactivestreams.client.MongoClient;
 import io.netty.channel.socket.SocketChannel;
-import reactor.core.publisher.Flux;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -45,7 +44,7 @@ import org.springframework.core.env.Environment;
  * @since 2.0.0
  */
 @Configuration
-@ConditionalOnClass({ MongoClient.class, Flux.class })
+@ConditionalOnClass(MongoClient.class)
 @EnableConfigurationProperties(MongoProperties.class)
 public class MongoReactiveAutoConfiguration {
 
@@ -68,10 +67,9 @@ public class MongoReactiveAutoConfiguration {
 	@ConditionalOnMissingBean
 	public MongoClient reactiveStreamsMongoClient(MongoProperties properties,
 			Environment environment,
-			ObjectProvider<MongoClientSettingsBuilderCustomizer> builderCustomizers) {
+			ObjectProvider<List<MongoClientSettingsBuilderCustomizer>> builderCustomizers) {
 		ReactiveMongoClientFactory factory = new ReactiveMongoClientFactory(properties,
-				environment,
-				builderCustomizers.orderedStream().collect(Collectors.toList()));
+				environment, builderCustomizers.getIfAvailable());
 		this.mongo = factory.createMongoClient(this.settings);
 		return this.mongo;
 	}

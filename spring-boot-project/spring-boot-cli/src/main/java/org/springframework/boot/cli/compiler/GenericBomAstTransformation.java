@@ -67,7 +67,8 @@ public abstract class GenericBomAstTransformation
 
 	/**
 	 * The bom to be added to dependency management in compact form:
-	 * {@code "<groupId>:<artifactId>:<version>"} (like in a {@code @Grab}).
+	 * <code>"&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;"</code> (like in a
+	 * {@code @Grab}).
 	 * @return the maven co-ordinates of the BOM to add
 	 */
 	protected abstract String getBomModule();

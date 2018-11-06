@@ -20,7 +20,9 @@ import java.util.function.Supplier;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -30,8 +32,6 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.StaticWebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link ApplicationContextRequestMatcher}.
@@ -40,11 +40,14 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  */
 public class ApplicationContextRequestMatcherTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void createWhenContextClassIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new TestApplicationContextRequestMatcher<>(null))
-				.withMessageContaining("Context class must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Context class must not be null");
+		new TestApplicationContextRequestMatcher<>(null);
 	}
 
 	@Test
@@ -68,8 +71,8 @@ public class ApplicationContextRequestMatcherTests {
 		StaticWebApplicationContext context = createWebApplicationContext();
 		Supplier<ExistingBean> supplier = new TestApplicationContextRequestMatcher<>(
 				ExistingBean.class).callMatchesAndReturnProvidedContext(context);
-		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-				.isThrownBy(supplier::get);
+		this.thrown.expect(NoSuchBeanDefinitionException.class);
+		supplier.get();
 	}
 
 	private StaticWebApplicationContext createWebApplicationContext() {

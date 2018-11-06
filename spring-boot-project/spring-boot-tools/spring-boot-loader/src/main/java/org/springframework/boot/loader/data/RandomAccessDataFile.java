@@ -16,7 +16,6 @@
 
 package org.springframework.boot.loader.data;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -58,9 +57,9 @@ public class RandomAccessDataFile implements RandomAccessData {
 	 * @param length the length of the section
 	 */
 	private RandomAccessDataFile(FileAccess fileAccess, long offset, long length) {
-		this.fileAccess = fileAccess;
 		this.offset = offset;
 		this.length = length;
+		this.fileAccess = fileAccess;
 	}
 
 	/**
@@ -91,12 +90,6 @@ public class RandomAccessDataFile implements RandomAccessData {
 
 	@Override
 	public byte[] read(long offset, long length) throws IOException {
-		if (offset > this.length) {
-			throw new IndexOutOfBoundsException();
-		}
-		if (offset + length > this.length) {
-			throw new EOFException();
-		}
 		byte[] bytes = new byte[(int) length];
 		read(bytes, offset, 0, bytes.length);
 		return bytes;
@@ -127,7 +120,8 @@ public class RandomAccessDataFile implements RandomAccessData {
 	}
 
 	/**
-	 * {@link InputStream} implementation for the {@link RandomAccessDataFile}.
+	 * {@link RandomAccessDataInputStream} implementation for the
+	 * {@link RandomAccessDataFile}.
 	 */
 	private class DataInputStream extends InputStream {
 
@@ -144,7 +138,7 @@ public class RandomAccessDataFile implements RandomAccessData {
 
 		@Override
 		public int read(byte[] b) throws IOException {
-			return read(b, 0, (b != null) ? b.length : 0);
+			return read(b, 0, b == null ? 0 : b.length);
 		}
 
 		@Override
@@ -178,7 +172,7 @@ public class RandomAccessDataFile implements RandomAccessData {
 
 		@Override
 		public long skip(long n) throws IOException {
-			return (n <= 0) ? 0 : moveOn(cap(n));
+			return (n <= 0 ? 0 : moveOn(cap(n)));
 		}
 
 		/**

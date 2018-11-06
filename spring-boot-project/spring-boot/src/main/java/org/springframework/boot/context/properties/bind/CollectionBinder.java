@@ -40,8 +40,8 @@ class CollectionBinder extends IndexedElementsBinder<Collection<Object>> {
 	@Override
 	protected Object bindAggregate(ConfigurationPropertyName name, Bindable<?> target,
 			AggregateElementBinder elementBinder) {
-		Class<?> collectionType = (target.getValue() != null) ? List.class
-				: target.getType().resolve(Object.class);
+		Class<?> collectionType = (target.getValue() == null
+				? target.getType().resolve(Object.class) : List.class);
 		ResolvableType aggregateType = ResolvableType.forClassWithGenerics(List.class,
 				target.getType().asCollection().getGenerics());
 		ResolvableType elementType = target.getType().asCollection().getGeneric();
@@ -55,9 +55,10 @@ class CollectionBinder extends IndexedElementsBinder<Collection<Object>> {
 	}
 
 	@Override
-	protected Collection<Object> merge(Supplier<Collection<Object>> existing,
+	@SuppressWarnings("unchecked")
+	protected Collection<Object> merge(Supplier<?> existing,
 			Collection<Object> additional) {
-		Collection<Object> existingCollection = getExistingIfPossible(existing);
+		Collection<Object> existingCollection = (Collection<Object>) existing.get();
 		if (existingCollection == null) {
 			return additional;
 		}
@@ -68,16 +69,6 @@ class CollectionBinder extends IndexedElementsBinder<Collection<Object>> {
 		}
 		catch (UnsupportedOperationException ex) {
 			return createNewCollection(additional);
-		}
-	}
-
-	private Collection<Object> getExistingIfPossible(
-			Supplier<Collection<Object>> existing) {
-		try {
-			return existing.get();
-		}
-		catch (Exception ex) {
-			return null;
 		}
 	}
 

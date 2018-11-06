@@ -17,7 +17,9 @@
 package org.springframework.boot.test.autoconfigure.data.neo4j;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.neo4j.ogm.session.Session;
 
@@ -32,7 +34,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Integration test for {@link DataNeo4jTest}.
@@ -47,6 +48,9 @@ public class DataNeo4jTestIntegrationTests {
 
 	@ClassRule
 	public static Neo4jContainer neo4j = new Neo4jContainer();
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Autowired
 	private Session session;
@@ -69,8 +73,8 @@ public class DataNeo4jTestIntegrationTests {
 
 	@Test
 	public void didNotInjectExampleService() {
-		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-				.isThrownBy(() -> this.applicationContext.getBean(ExampleService.class));
+		this.thrown.expect(NoSuchBeanDefinitionException.class);
+		this.applicationContext.getBean(ExampleService.class);
 	}
 
 	static class Initializer

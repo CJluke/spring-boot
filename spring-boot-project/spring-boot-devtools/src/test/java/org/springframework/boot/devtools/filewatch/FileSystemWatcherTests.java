@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,13 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import org.springframework.boot.devtools.filewatch.ChangedFile.Type;
 import org.springframework.util.FileCopyUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -46,6 +45,9 @@ import static org.mockito.Mockito.mock;
  * @author Phillip Webb
  */
 public class FileSystemWatcherTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private FileSystemWatcher watcher;
 
@@ -62,66 +64,72 @@ public class FileSystemWatcherTests {
 
 	@Test
 	public void pollIntervalMustBePositive() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new FileSystemWatcher(true, Duration.ofMillis(0),
-						Duration.ofMillis(1)))
-				.withMessageContaining("PollInterval must be positive");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("PollInterval must be positive");
+		new FileSystemWatcher(true, Duration.ofMillis(0), Duration.ofMillis(1));
 	}
 
 	@Test
 	public void quietPeriodMustBePositive() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new FileSystemWatcher(true, Duration.ofMillis(1),
-						Duration.ofMillis(0)))
-				.withMessageContaining("QuietPeriod must be positive");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("QuietPeriod must be positive");
+		new FileSystemWatcher(true, Duration.ofMillis(1), Duration.ofMillis(0));
 	}
 
 	@Test
 	public void pollIntervalMustBeGreaterThanQuietPeriod() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new FileSystemWatcher(true, Duration.ofMillis(1),
-						Duration.ofMillis(1)))
-				.withMessageContaining("PollInterval must be greater than QuietPeriod");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("PollInterval must be greater than QuietPeriod");
+		new FileSystemWatcher(true, Duration.ofMillis(1), Duration.ofMillis(1));
 	}
 
 	@Test
 	public void listenerMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.watcher.addListener(null))
-				.withMessageContaining("FileChangeListener must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("FileChangeListener must not be null");
+		this.watcher.addListener(null);
 	}
 
 	@Test
 	public void cannotAddListenerToStartedListener() {
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("FileSystemWatcher already started");
 		this.watcher.start();
-		assertThatIllegalStateException()
-				.isThrownBy(
-						() -> this.watcher.addListener(mock(FileChangeListener.class)))
-				.withMessageContaining("FileSystemWatcher already started");
+		this.watcher.addListener(mock(FileChangeListener.class));
 	}
 
 	@Test
 	public void sourceFolderMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.watcher.addSourceFolder(null))
-				.withMessageContaining("Folder must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Folder must not be null");
+		this.watcher.addSourceFolder(null);
 	}
 
 	@Test
-	public void sourceFolderMustNotBeAFile() {
+	public void sourceFolderMustExist() {
+		File folder = new File("does/not/exist");
+		assertThat(folder.exists()).isFalse();
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage(
+				"Folder '" + folder + "' must exist and must be a directory");
+		this.watcher.addSourceFolder(folder);
+	}
+
+	@Test
+	public void sourceFolderMustBeADirectory() {
 		File folder = new File("pom.xml");
 		assertThat(folder.isFile()).isTrue();
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> this.watcher.addSourceFolder(new File("pom.xml")))
-				.withMessageContaining("Folder 'pom.xml' must not be a file");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Folder 'pom.xml' must exist and must be a directory");
+		this.watcher.addSourceFolder(new File("pom.xml"));
 	}
 
 	@Test
 	public void cannotAddSourceFolderToStartedListener() throws Exception {
+		this.thrown.expect(IllegalStateException.class);
+		this.thrown.expectMessage("FileSystemWatcher already started");
 		this.watcher.start();
-		assertThatIllegalStateException()
-				.isThrownBy(() -> this.watcher.addSourceFolder(this.temp.newFolder()))
-				.withMessageContaining("FileSystemWatcher already started");
+		this.watcher.addSourceFolder(this.temp.newFolder());
 	}
 
 	@Test
@@ -138,20 +146,6 @@ public class FileSystemWatcherTests {
 	public void addNestedFile() throws Exception {
 		File folder = startWithNewFolder();
 		File file = touch(new File(new File(folder, "sub"), "text.txt"));
-		this.watcher.stopAfter(1);
-		ChangedFiles changedFiles = getSingleChangedFiles();
-		ChangedFile expected = new ChangedFile(folder, file, Type.ADD);
-		assertThat(changedFiles.getFiles()).contains(expected);
-	}
-
-	@Test
-	public void createSourceFolderAndAddFile() throws IOException {
-		File folder = new File(this.temp.getRoot(), "does/not/exist");
-		assertThat(folder.exists()).isFalse();
-		this.watcher.addSourceFolder(folder);
-		this.watcher.start();
-		folder.mkdirs();
-		File file = touch(new File(folder, "text.txt"));
 		this.watcher.stopAfter(1);
 		ChangedFiles changedFiles = getSingleChangedFiles();
 		ChangedFile expected = new ChangedFile(folder, file, Type.ADD);

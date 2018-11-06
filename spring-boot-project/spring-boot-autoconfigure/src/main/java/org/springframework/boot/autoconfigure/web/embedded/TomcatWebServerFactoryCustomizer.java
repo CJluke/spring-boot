@@ -37,7 +37,6 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
-import org.springframework.util.unit.DataSize;
 
 /**
  * Customization for Tomcat-specific features common for both Servlet and Reactive
@@ -47,8 +46,6 @@ import org.springframework.util.unit.DataSize;
  * @author Yulin Qin
  * @author Stephane Nicoll
  * @author Phillip Webb
- * @author Artsiom Yudovin
- * @author Chentao Qu
  * @since 2.0.0
  */
 public class TomcatWebServerFactoryCustomizer implements
@@ -85,14 +82,10 @@ public class TomcatWebServerFactoryCustomizer implements
 						tomcatProperties.getMaxThreads()));
 		propertyMapper.from(tomcatProperties::getMinSpareThreads).when(this::isPositive)
 				.to((minSpareThreads) -> customizeMinThreads(factory, minSpareThreads));
-		propertyMapper.from(this::determineMaxHttpHeaderSize).whenNonNull()
-				.asInt(DataSize::toBytes).when(this::isPositive)
+		propertyMapper.from(() -> determineMaxHttpHeaderSize()).when(this::isPositive)
 				.to((maxHttpHeaderSize) -> customizeMaxHttpHeaderSize(factory,
 						maxHttpHeaderSize));
-		propertyMapper.from(tomcatProperties::getMaxSwallowSize).whenNonNull()
-				.asInt(DataSize::toBytes)
-				.to((maxSwallowSize) -> customizeMaxSwallowSize(factory, maxSwallowSize));
-		propertyMapper.from(tomcatProperties::getMaxHttpPostSize).asInt(DataSize::toBytes)
+		propertyMapper.from(tomcatProperties::getMaxHttpPostSize)
 				.when((maxHttpPostSize) -> maxHttpPostSize != 0)
 				.to((maxHttpPostSize) -> customizeMaxHttpPostSize(factory,
 						maxHttpPostSize));
@@ -116,11 +109,10 @@ public class TomcatWebServerFactoryCustomizer implements
 		return value > 0;
 	}
 
-	@SuppressWarnings("deprecation")
-	private DataSize determineMaxHttpHeaderSize() {
-		return (this.serverProperties.getTomcat().getMaxHttpHeaderSize().toBytes() > 0)
-				? this.serverProperties.getTomcat().getMaxHttpHeaderSize()
-				: this.serverProperties.getMaxHttpHeaderSize();
+	private int determineMaxHttpHeaderSize() {
+		return this.serverProperties.getMaxHttpHeaderSize() > 0
+				? this.serverProperties.getMaxHttpHeaderSize()
+				: this.serverProperties.getTomcat().getMaxHttpHeaderSize();
 	}
 
 	private void customizeAcceptCount(ConfigurableTomcatWebServerFactory factory,
@@ -224,17 +216,6 @@ public class TomcatWebServerFactoryCustomizer implements
 		});
 	}
 
-	private void customizeMaxSwallowSize(ConfigurableTomcatWebServerFactory factory,
-			int maxSwallowSize) {
-		factory.addConnectorCustomizers((connector) -> {
-			ProtocolHandler handler = connector.getProtocolHandler();
-			if (handler instanceof AbstractHttp11Protocol) {
-				AbstractHttp11Protocol<?> protocol = (AbstractHttp11Protocol<?>) handler;
-				protocol.setMaxSwallowSize(maxSwallowSize);
-			}
-		});
-	}
-
 	private void customizeMaxHttpPostSize(ConfigurableTomcatWebServerFactory factory,
 			int maxHttpPostSize) {
 		factory.addConnectorCustomizers(
@@ -260,14 +241,14 @@ public class TomcatWebServerFactoryCustomizer implements
 	private void customizeStaticResources(ConfigurableTomcatWebServerFactory factory) {
 		ServerProperties.Tomcat.Resource resource = this.serverProperties.getTomcat()
 				.getResource();
+		if (resource.getCacheTtl() == null) {
+			return;
+		}
 		factory.addContextCustomizers((context) -> {
 			context.addLifecycleListener((event) -> {
 				if (event.getType().equals(Lifecycle.CONFIGURE_START_EVENT)) {
-					context.getResources().setCachingAllowed(resource.isAllowCaching());
-					if (resource.getCacheTtl() != null) {
-						long ttl = resource.getCacheTtl().toMillis();
-						context.getResources().setCacheTtl(ttl);
-					}
+					long ttl = resource.getCacheTtl().toMillis();
+					context.getResources().setCacheTtl(ttl);
 				}
 			});
 		});

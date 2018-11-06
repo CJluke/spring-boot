@@ -22,13 +22,14 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.commons.logging.Log;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.util.LambdaSafe.Filter;
 import org.springframework.boot.util.LambdaSafe.InvocationResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
@@ -44,18 +45,21 @@ import static org.mockito.Mockito.verifyZeroInteractions;
  */
 public class LambdaSafeTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void callbackWhenCallbackTypeIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> LambdaSafe.callback(null, new Object(), null))
-				.withMessageContaining("CallbackType must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("CallbackType must not be null");
+		LambdaSafe.callback(null, new Object(), null);
 	}
 
 	@Test
 	public void callbackWhenCallbackInstanceIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> LambdaSafe.callback(Object.class, null, null))
-				.withMessageContaining("CallbackInstance must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("CallbackInstance must not be null");
+		LambdaSafe.callback(Object.class, null, null);
 	}
 
 	@Test

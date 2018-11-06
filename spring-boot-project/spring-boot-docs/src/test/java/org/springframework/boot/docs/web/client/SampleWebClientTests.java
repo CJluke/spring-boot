@@ -16,8 +16,6 @@
 
 package org.springframework.boot.docs.web.client;
 
-import java.time.Duration;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,8 +56,7 @@ public class SampleWebClientTests {
 
 		@Bean
 		public RestTemplateBuilder restTemplateBuilder() {
-			return new RestTemplateBuilder().setConnectTimeout(Duration.ofSeconds(1))
-					.setReadTimeout(Duration.ofSeconds(1));
+			return new RestTemplateBuilder().setConnectTimeout(1000).setReadTimeout(1000);
 		}
 
 	}

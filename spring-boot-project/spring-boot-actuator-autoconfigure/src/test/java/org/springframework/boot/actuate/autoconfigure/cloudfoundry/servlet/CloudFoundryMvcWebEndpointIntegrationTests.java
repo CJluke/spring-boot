@@ -36,6 +36,7 @@ import org.springframework.boot.actuate.endpoint.invoke.convert.ConversionServic
 import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
+import org.springframework.boot.actuate.endpoint.web.PathMapper;
 import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpointDiscoverer;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext;
@@ -218,8 +219,8 @@ public class CloudFoundryMvcWebEndpointIntegrationTests {
 			ParameterValueMapper parameterMapper = new ConversionServiceParameterValueMapper(
 					DefaultConversionService.getSharedInstance());
 			return new WebEndpointDiscoverer(applicationContext, parameterMapper,
-					endpointMediaTypes, null, Collections.emptyList(),
-					Collections.emptyList());
+					endpointMediaTypes, PathMapper.useEndpointId(),
+					Collections.emptyList(), Collections.emptyList());
 		}
 
 		@Bean

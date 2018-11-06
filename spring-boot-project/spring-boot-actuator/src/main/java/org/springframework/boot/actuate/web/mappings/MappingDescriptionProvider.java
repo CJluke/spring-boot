@@ -31,6 +31,7 @@ public interface MappingDescriptionProvider {
 
 	/**
 	 * Returns the name of the mappings described by this provider.
+	 *
 	 * @return the name of the mappings
 	 */
 	String getMappingName();

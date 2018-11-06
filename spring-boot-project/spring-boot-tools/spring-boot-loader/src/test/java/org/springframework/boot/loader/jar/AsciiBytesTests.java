@@ -16,10 +16,11 @@
 
 package org.springframework.boot.loader.jar;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Tests for {@link AsciiBytes}.
@@ -30,6 +31,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class AsciiBytesTests {
 
 	private static final char NO_SUFFIX = 0;
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void createFromBytes() {
@@ -89,8 +93,8 @@ public class AsciiBytesTests {
 		assertThat(abcd.substring(2).toString()).isEqualTo("CD");
 		assertThat(abcd.substring(3).toString()).isEqualTo("D");
 		assertThat(abcd.substring(4).toString()).isEqualTo("");
-		assertThatExceptionOfType(IndexOutOfBoundsException.class)
-				.isThrownBy(() -> abcd.substring(5));
+		this.thrown.expect(IndexOutOfBoundsException.class);
+		abcd.substring(5);
 	}
 
 	@Test
@@ -100,8 +104,8 @@ public class AsciiBytesTests {
 		assertThat(abcd.substring(1, 3).toString()).isEqualTo("BC");
 		assertThat(abcd.substring(3, 4).toString()).isEqualTo("D");
 		assertThat(abcd.substring(3, 3).toString()).isEqualTo("");
-		assertThatExceptionOfType(IndexOutOfBoundsException.class)
-				.isThrownBy(() -> abcd.substring(3, 5));
+		this.thrown.expect(IndexOutOfBoundsException.class);
+		abcd.substring(3, 5);
 	}
 
 	@Test
@@ -195,5 +199,4 @@ public class AsciiBytesTests {
 	private void matchesSameAsString(String input) {
 		assertThat(new AsciiBytes(input).matches(input, NO_SUFFIX)).isTrue();
 	}
-
 }

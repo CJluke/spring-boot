@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 
 package org.springframework.boot.test.json;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.core.ResolvableType;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link JsonContent}.
@@ -35,18 +36,21 @@ public class JsonContentTests {
 	private static final ResolvableType TYPE = ResolvableType
 			.forClass(ExampleObject.class);
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void createWhenResourceLoadClassIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JsonContent<ExampleObject>(null, TYPE, JSON))
-				.withMessageContaining("ResourceLoadClass must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("ResourceLoadClass must not be null");
+		new JsonContent<ExampleObject>(null, TYPE, JSON);
 	}
 
 	@Test
 	public void createWhenJsonIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new JsonContent<ExampleObject>(getClass(), TYPE, null))
-				.withMessageContaining("JSON must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("JSON must not be null");
+		new JsonContent<ExampleObject>(getClass(), TYPE, null);
 	}
 
 	@Test

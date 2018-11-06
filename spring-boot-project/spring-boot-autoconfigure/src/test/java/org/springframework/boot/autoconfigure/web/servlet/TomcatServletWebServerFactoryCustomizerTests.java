@@ -109,5 +109,4 @@ public class TomcatServletWebServerFactoryCustomizerTests {
 		this.customizer.customize(factory);
 		return factory;
 	}
-
 }

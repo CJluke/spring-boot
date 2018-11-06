@@ -1,14 +1,17 @@
-plugins {
-	id 'org.springframework.boot' version '{version}'
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
 }
 
+apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 dependencyManagement {
 	resolutionStrategy {
 		eachDependency {
 			if (it.requested.group == 'org.springframework.boot') {
-				it.useVersion '{version}'
+				it.useVersion project.bootVersion
 			}
 		}
 	}

@@ -58,6 +58,7 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.util.StringUtils;
 
@@ -100,7 +101,7 @@ public class EmbeddedLdapAutoConfiguration {
 	@Bean
 	@DependsOn("directoryServer")
 	@ConditionalOnMissingBean
-	public LdapContextSource ldapContextSource() {
+	public ContextSource ldapContextSource() {
 		LdapContextSource source = new LdapContextSource();
 		if (hasCredentials(this.embeddedProperties.getCredential())) {
 			source.setUserDn(this.embeddedProperties.getCredential().getUsername());

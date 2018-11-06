@@ -141,15 +141,6 @@ public class SampleActuatorCustomSecurityApplicationTests {
 		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
 	}
 
-	@Test
-	public void mvcMatchersCanBeUsedToSecureActuators() {
-		ResponseEntity<Object> entity = beansRestTemplate()
-				.getForEntity("/actuator/beans", Object.class);
-		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-		entity = beansRestTemplate().getForEntity("/actuator/beans/", Object.class);
-		assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-	}
-
 	private TestRestTemplate restTemplate() {
 		return configure(new TestRestTemplate());
 	}
@@ -160,10 +151,6 @@ public class SampleActuatorCustomSecurityApplicationTests {
 
 	private TestRestTemplate userRestTemplate() {
 		return configure(new TestRestTemplate("user", "password"));
-	}
-
-	private TestRestTemplate beansRestTemplate() {
-		return configure(new TestRestTemplate("beans", "beans"));
 	}
 
 	private TestRestTemplate configure(TestRestTemplate restTemplate) {

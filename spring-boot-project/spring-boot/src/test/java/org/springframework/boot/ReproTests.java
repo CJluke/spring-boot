@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Profiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,10 +50,8 @@ public class ReproTests {
 		this.context = application.run(
 				"--spring.config.name=enableprofileviaapplicationproperties",
 				"--spring.profiles.active=dev");
-		assertThat(this.context.getEnvironment().acceptsProfiles(Profiles.of("dev")))
-				.isTrue();
-		assertThat(this.context.getEnvironment().acceptsProfiles(Profiles.of("a")))
-				.isTrue();
+		assertThat(this.context.getEnvironment().acceptsProfiles("dev")).isTrue();
+		assertThat(this.context.getEnvironment().acceptsProfiles("a")).isTrue();
 	}
 
 	@Test

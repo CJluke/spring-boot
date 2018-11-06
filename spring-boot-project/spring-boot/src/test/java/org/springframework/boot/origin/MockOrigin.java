@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ public final class MockOrigin implements Origin {
 	}
 
 	@Override
+	public int hashCode() {
+		return this.value.hashCode();
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
@@ -44,17 +49,12 @@ public final class MockOrigin implements Origin {
 	}
 
 	@Override
-	public int hashCode() {
-		return this.value.hashCode();
-	}
-
-	@Override
 	public String toString() {
 		return this.value;
 	}
 
 	public static Origin of(String value) {
-		return (value != null) ? new MockOrigin(value) : null;
+		return (value == null ? null : new MockOrigin(value));
 	}
 
 }

@@ -29,9 +29,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.context.annotation.Bean;
-import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
-import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
+import org.springframework.restdocs.restassured3.RestAssuredRestDocumentationConfigurer;
 import org.springframework.restdocs.templates.TemplateFormats;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.FileSystemUtils;
@@ -41,8 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.modifyUris;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.restassured3.RestAssuredRestDocumentation.document;
 
 /**
@@ -81,7 +77,6 @@ public class RestAssuredRestDocsAutoConfigurationAdvancedConfigurationIntegratio
 		assertThat(new File(defaultSnippetsDir, "http-request.md"))
 				.has(contentContaining("api.example.com"));
 		assertThat(new File(defaultSnippetsDir, "http-response.md")).isFile();
-		assertThat(new File(defaultSnippetsDir, "response-fields.md")).isFile();
 	}
 
 	private Condition<File> contentContaining(String toContain) {
@@ -89,23 +84,12 @@ public class RestAssuredRestDocsAutoConfigurationAdvancedConfigurationIntegratio
 	}
 
 	@TestConfiguration
-	public static class CustomizationConfiguration {
+	public static class CustomizationConfiguration
+			implements RestDocsRestAssuredConfigurationCustomizer {
 
-		@Bean
-		public RestDocumentationResultHandler restDocumentation() {
-			return MockMvcRestDocumentation.document("{method-name}");
-		}
-
-		@Bean
-		public RestDocsRestAssuredConfigurationCustomizer templateFormatCustomizer() {
-			return (configurer) -> configurer.snippets()
-					.withTemplateFormat(TemplateFormats.markdown());
-		}
-
-		@Bean
-		public RestDocsRestAssuredConfigurationCustomizer defaultSnippetsCustomizer() {
-			return (configurer) -> configurer.snippets().withAdditionalDefaults(
-					responseFields(fieldWithPath("_links.self").description("Main URL")));
+		@Override
+		public void customize(RestAssuredRestDocumentationConfigurer configurer) {
+			configurer.snippets().withTemplateFormat(TemplateFormats.markdown());
 		}
 
 	}

@@ -17,6 +17,7 @@
 package org.springframework.boot.autoconfigure.cassandra;
 
 import java.time.Duration;
+import java.util.List;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PoolingOptions;
@@ -50,17 +51,16 @@ public class CassandraAutoConfiguration {
 
 	private final CassandraProperties properties;
 
-	private final ObjectProvider<ClusterBuilderCustomizer> builderCustomizers;
+	private final List<ClusterBuilderCustomizer> builderCustomizers;
 
 	public CassandraAutoConfiguration(CassandraProperties properties,
-			ObjectProvider<ClusterBuilderCustomizer> builderCustomizers) {
+			ObjectProvider<List<ClusterBuilderCustomizer>> builderCustomizers) {
 		this.properties = properties;
-		this.builderCustomizers = builderCustomizers;
+		this.builderCustomizers = builderCustomizers.getIfAvailable();
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
-	@SuppressWarnings("deprecation")
 	public Cluster cassandraCluster() {
 		PropertyMapper map = PropertyMapper.get();
 		CassandraProperties properties = this.properties;
@@ -80,17 +80,19 @@ public class CassandraAutoConfiguration {
 		map.from(this::getSocketOptions).to(builder::withSocketOptions);
 		map.from(properties::isSsl).whenTrue().toCall(builder::withSSL);
 		map.from(this::getPoolingOptions).to(builder::withPoolingOptions);
-		map.from(properties::getContactPoints).as(StringUtils::toStringArray)
+		map.from(properties::getContactPoints)
+				.as((list) -> StringUtils.toStringArray(list))
 				.to(builder::addContactPoints);
-		map.from(properties::isJmxEnabled).whenFalse()
-				.toCall(builder::withoutJMXReporting);
 		customize(builder);
 		return builder.build();
 	}
 
 	private void customize(Cluster.Builder builder) {
-		this.builderCustomizers.orderedStream()
-				.forEach((customizer) -> customizer.customize(builder));
+		if (this.builderCustomizers != null) {
+			for (ClusterBuilderCustomizer customizer : this.builderCustomizers) {
+				customizer.customize(builder);
+			}
+		}
 	}
 
 	private QueryOptions getQueryOptions() {

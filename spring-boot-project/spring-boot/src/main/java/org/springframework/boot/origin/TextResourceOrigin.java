@@ -55,6 +55,14 @@ public class TextResourceOrigin implements Origin {
 	}
 
 	@Override
+	public int hashCode() {
+		int result = 1;
+		result = 31 * result + ObjectUtils.nullSafeHashCode(this.resource);
+		result = 31 * result + ObjectUtils.nullSafeHashCode(this.location);
+		return result;
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
 			return true;
@@ -73,18 +81,10 @@ public class TextResourceOrigin implements Origin {
 	}
 
 	@Override
-	public int hashCode() {
-		int result = 1;
-		result = 31 * result + ObjectUtils.nullSafeHashCode(this.resource);
-		result = 31 * result + ObjectUtils.nullSafeHashCode(this.location);
-		return result;
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder result = new StringBuilder();
-		result.append((this.resource != null) ? this.resource.getDescription()
-				: "unknown resource [?]");
+		result.append(this.resource == null ? "unknown resource [?]"
+				: this.resource.getDescription());
 		if (this.location != null) {
 			result.append(":").append(this.location);
 		}
@@ -127,6 +127,11 @@ public class TextResourceOrigin implements Origin {
 		}
 
 		@Override
+		public int hashCode() {
+			return (31 * this.line) + this.column;
+		}
+
+		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
@@ -139,11 +144,6 @@ public class TextResourceOrigin implements Origin {
 			result = result && this.line == other.line;
 			result = result && this.column == other.column;
 			return result;
-		}
-
-		@Override
-		public int hashCode() {
-			return (31 * this.line) + this.column;
 		}
 
 		@Override

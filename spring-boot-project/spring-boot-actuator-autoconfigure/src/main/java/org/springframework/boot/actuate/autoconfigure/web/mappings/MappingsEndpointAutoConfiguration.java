@@ -16,10 +16,12 @@
 
 package org.springframework.boot.actuate.autoconfigure.web.mappings;
 
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnEnabledEndpoint;
+import org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfiguration;
 import org.springframework.boot.actuate.web.mappings.MappingDescriptionProvider;
 import org.springframework.boot.actuate.web.mappings.MappingsEndpoint;
 import org.springframework.boot.actuate.web.mappings.reactive.DispatcherHandlersMappingDescriptionProvider;
@@ -43,15 +45,15 @@ import org.springframework.web.servlet.DispatcherServlet;
  * @author Andy Wilkinson
  * @since 2.0.0
  */
-@Configuration
+@ManagementContextConfiguration
 public class MappingsEndpointAutoConfiguration {
 
 	@Bean
 	@ConditionalOnEnabledEndpoint
 	public MappingsEndpoint mappingsEndpoint(ApplicationContext applicationContext,
-			ObjectProvider<MappingDescriptionProvider> descriptionProviders) {
+			ObjectProvider<Collection<MappingDescriptionProvider>> descriptionProviders) {
 		return new MappingsEndpoint(
-				descriptionProviders.orderedStream().collect(Collectors.toList()),
+				descriptionProviders.getIfAvailable(Collections::emptyList),
 				applicationContext);
 	}
 
@@ -90,7 +92,8 @@ public class MappingsEndpointAutoConfiguration {
 	static class ReactiveWebConfiguration {
 
 		@Bean
-		public DispatcherHandlersMappingDescriptionProvider dispatcherHandlerMappingDescriptionProvider() {
+		public DispatcherHandlersMappingDescriptionProvider dispatcherHandlerMappingDescriptionProvider(
+				ApplicationContext applicationContext) {
 			return new DispatcherHandlersMappingDescriptionProvider();
 		}
 

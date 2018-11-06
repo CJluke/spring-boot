@@ -84,7 +84,10 @@ class SslBuilderCustomizer implements UndertowBuilderCustomizer {
 						Sequence.of(this.ssl.getCiphers()));
 			}
 		}
-		catch (NoSuchAlgorithmException | KeyManagementException ex) {
+		catch (NoSuchAlgorithmException ex) {
+			throw new IllegalStateException(ex);
+		}
+		catch (KeyManagementException ex) {
 			throw new IllegalStateException(ex);
 		}
 	}
@@ -111,8 +114,8 @@ class SslBuilderCustomizer implements UndertowBuilderCustomizer {
 			KeyStore keyStore = getKeyStore(ssl, sslStoreProvider);
 			KeyManagerFactory keyManagerFactory = KeyManagerFactory
 					.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			char[] keyPassword = (ssl.getKeyPassword() != null)
-					? ssl.getKeyPassword().toCharArray() : null;
+			char[] keyPassword = (ssl.getKeyPassword() != null
+					? ssl.getKeyPassword().toCharArray() : null);
 			if (keyPassword == null && ssl.getKeyStorePassword() != null) {
 				keyPassword = ssl.getKeyStorePassword().toCharArray();
 			}
@@ -144,8 +147,8 @@ class SslBuilderCustomizer implements UndertowBuilderCustomizer {
 		if (sslStoreProvider != null) {
 			return sslStoreProvider.getKeyStore();
 		}
-		return loadKeyStore(ssl.getKeyStoreType(), ssl.getKeyStoreProvider(),
-				ssl.getKeyStore(), ssl.getKeyStorePassword());
+		return loadKeyStore(ssl.getKeyStoreType(), ssl.getKeyStore(),
+				ssl.getKeyStorePassword());
 	}
 
 	private TrustManager[] getTrustManagers(Ssl ssl, SslStoreProvider sslStoreProvider) {
@@ -166,20 +169,19 @@ class SslBuilderCustomizer implements UndertowBuilderCustomizer {
 		if (sslStoreProvider != null) {
 			return sslStoreProvider.getTrustStore();
 		}
-		return loadKeyStore(ssl.getTrustStoreType(), ssl.getTrustStoreProvider(),
-				ssl.getTrustStore(), ssl.getTrustStorePassword());
+		return loadKeyStore(ssl.getTrustStoreType(), ssl.getTrustStore(),
+				ssl.getTrustStorePassword());
 	}
 
-	private KeyStore loadKeyStore(String type, String provider, String resource,
-			String password) throws Exception {
-		type = (type != null) ? type : "JKS";
+	private KeyStore loadKeyStore(String type, String resource, String password)
+			throws Exception {
+		type = (type == null ? "JKS" : type);
 		if (resource == null) {
 			return null;
 		}
-		KeyStore store = (provider != null) ? KeyStore.getInstance(type, provider)
-				: KeyStore.getInstance(type);
+		KeyStore store = KeyStore.getInstance(type);
 		URL url = ResourceUtils.getURL(resource);
-		store.load(url.openStream(), (password != null) ? password.toCharArray() : null);
+		store.load(url.openStream(), password == null ? null : password.toCharArray());
 		return store;
 	}
 

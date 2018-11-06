@@ -91,6 +91,7 @@ public class BuildInfoIntegrationTests {
 				.getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
 		BuildResult result = this.gradleBuild.build("buildInfo", "-PnullTime",
 				"-PprojectVersion=0.2.0");
+		System.out.println(result.getOutput());
 		assertThat(result.task(":buildInfo").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
 	}
 

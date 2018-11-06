@@ -22,7 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -30,7 +32,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplateHandler;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -42,6 +43,9 @@ import static org.mockito.Mockito.verify;
  * @author Phillip Webb
  */
 public class RootUriTemplateHandlerTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private URI uri;
 
@@ -63,16 +67,16 @@ public class RootUriTemplateHandlerTests {
 
 	@Test
 	public void createWithNullRootUriShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new RootUriTemplateHandler((String) null))
-				.withMessageContaining("RootUri must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("RootUri must not be null");
+		new RootUriTemplateHandler((String) null);
 	}
 
 	@Test
 	public void createWithNullHandlerShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new RootUriTemplateHandler("http://example.com", null))
-				.withMessageContaining("Handler must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Handler must not be null");
+		new RootUriTemplateHandler("http://example.com", null);
 	}
 
 	@Test

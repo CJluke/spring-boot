@@ -23,13 +23,11 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.EnvironmentAware;
@@ -40,11 +38,11 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.config.EnableIntegrationManagement;
-import org.springframework.integration.config.IntegrationManagementConfigurer;
 import org.springframework.integration.gateway.GatewayProxyFactoryBean;
 import org.springframework.integration.jdbc.store.JdbcMessageStore;
 import org.springframework.integration.jmx.config.EnableIntegrationMBeanExport;
 import org.springframework.integration.monitor.IntegrationMBeanExporter;
+import org.springframework.integration.support.management.IntegrationManagementConfigurer;
 import org.springframework.util.StringUtils;
 
 /**
@@ -61,7 +59,7 @@ import org.springframework.util.StringUtils;
 @Configuration
 @ConditionalOnClass(EnableIntegration.class)
 @EnableConfigurationProperties(IntegrationProperties.class)
-@AutoConfigureAfter({ DataSourceAutoConfiguration.class, JmxAutoConfiguration.class })
+@AutoConfigureAfter(JmxAutoConfiguration.class)
 public class IntegrationAutoConfiguration {
 
 	/**
@@ -79,7 +77,6 @@ public class IntegrationAutoConfiguration {
 	@Configuration
 	@ConditionalOnClass(EnableIntegrationMBeanExport.class)
 	@ConditionalOnMissingBean(value = IntegrationMBeanExporter.class, search = SearchStrategy.CURRENT)
-	@ConditionalOnBean(MBeanServer.class)
 	@ConditionalOnProperty(prefix = "spring.jmx", name = "enabled", havingValue = "true", matchIfMissing = true)
 	protected static class IntegrationJmxConfiguration
 			implements EnvironmentAware, BeanFactoryAware {
@@ -133,10 +130,9 @@ public class IntegrationAutoConfiguration {
 	/**
 	 * Integration component scan configuration.
 	 */
-	@Configuration
 	@ConditionalOnMissingBean(GatewayProxyFactoryBean.class)
 	@Import(IntegrationAutoConfigurationScanRegistrar.class)
-	protected static class IntegrationComponentScanConfiguration {
+	protected static class IntegrationComponentScanAutoConfiguration {
 
 	}
 

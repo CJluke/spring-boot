@@ -1,5 +1,7 @@
-plugins {
-	id 'org.springframework.boot' version '{version}' apply false
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
 }
 
 def property(String name, Object defaultValue) {

@@ -87,7 +87,8 @@ public class TomcatWebServer implements WebServer {
 	}
 
 	private void initialize() throws WebServerException {
-		logger.info("Tomcat initialized with port(s): " + getPortsDescription(false));
+		TomcatWebServer.logger
+				.info("Tomcat initialized with port(s): " + getPortsDescription(false));
 		synchronized (this.monitor) {
 			try {
 				addInstanceIdToEngineName();
@@ -197,12 +198,13 @@ public class TomcatWebServer implements WebServer {
 				addPreviouslyRemovedConnectors();
 				Connector connector = this.tomcat.getConnector();
 				if (connector != null && this.autoStart) {
-					performDeferredLoadOnStartup();
+					startConnector();
 				}
 				checkThatConnectorsHaveStarted();
 				this.started = true;
-				logger.info("Tomcat started on port(s): " + getPortsDescription(true)
-						+ " with context path '" + getContextPath() + "'");
+				TomcatWebServer.logger
+						.info("Tomcat started on port(s): " + getPortsDescription(true)
+								+ " with context path '" + getContextPath() + "'");
 			}
 			catch (ConnectorStartFailedException ex) {
 				stopSilently();
@@ -221,15 +223,10 @@ public class TomcatWebServer implements WebServer {
 	}
 
 	private void checkThatConnectorsHaveStarted() {
-		checkConnectorHasStarted(this.tomcat.getConnector());
 		for (Connector connector : this.tomcat.getService().findConnectors()) {
-			checkConnectorHasStarted(connector);
-		}
-	}
-
-	private void checkConnectorHasStarted(Connector connector) {
-		if (LifecycleState.FAILED.equals(connector.getState())) {
-			throw new ConnectorStartFailedException(connector.getPort());
+			if (LifecycleState.FAILED.equals(connector.getState())) {
+				throw new ConnectorStartFailedException(connector.getPort());
+			}
 		}
 	}
 
@@ -271,11 +268,11 @@ public class TomcatWebServer implements WebServer {
 			connector.getProtocolHandler().stop();
 		}
 		catch (Exception ex) {
-			logger.error("Cannot pause connector: ", ex);
+			TomcatWebServer.logger.error("Cannot pause connector: ", ex);
 		}
 	}
 
-	private void performDeferredLoadOnStartup() {
+	private void startConnector() {
 		try {
 			for (Container child : this.tomcat.getHost().findChildren()) {
 				if (child instanceof TomcatEmbeddedContext) {
@@ -284,9 +281,7 @@ public class TomcatWebServer implements WebServer {
 			}
 		}
 		catch (Exception ex) {
-			if (ex instanceof WebServerException) {
-				throw (WebServerException) ex;
-			}
+			TomcatWebServer.logger.error("Cannot start connector: ", ex);
 			throw new WebServerException("Unable to start embedded Tomcat connectors",
 					ex);
 		}
@@ -324,11 +319,9 @@ public class TomcatWebServer implements WebServer {
 	private String getPortsDescription(boolean localPort) {
 		StringBuilder ports = new StringBuilder();
 		for (Connector connector : this.tomcat.getService().findConnectors()) {
-			if (ports.length() != 0) {
-				ports.append(' ');
-			}
-			int port = localPort ? connector.getLocalPort() : connector.getPort();
-			ports.append(port).append(" (").append(connector.getScheme()).append(')');
+			ports.append(ports.length() == 0 ? "" : " ");
+			int port = (localPort ? connector.getLocalPort() : connector.getPort());
+			ports.append(port + " (" + connector.getScheme() + ")");
 		}
 		return ports.toString();
 	}
@@ -356,5 +349,4 @@ public class TomcatWebServer implements WebServer {
 	public Tomcat getTomcat() {
 		return this.tomcat;
 	}
-
 }

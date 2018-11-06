@@ -52,8 +52,7 @@ import org.springframework.kafka.transaction.KafkaTransactionManager;
 @Configuration
 @ConditionalOnClass(KafkaTemplate.class)
 @EnableConfigurationProperties(KafkaProperties.class)
-@Import({ KafkaAnnotationDrivenConfiguration.class,
-		KafkaStreamsAnnotationDrivenConfiguration.class })
+@Import(KafkaAnnotationDrivenConfiguration.class)
 public class KafkaAutoConfiguration {
 
 	private final KafkaProperties properties;

@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.boot.actuate.autoconfigure.cloudfoundry.AccessLevel;
 import org.springframework.boot.actuate.autoconfigure.cloudfoundry.SecurityResponse;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;
 import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes;
@@ -69,7 +68,7 @@ class CloudFoundryWebEndpointServletHandlerMapping
 	protected ServletWebOperation wrapServletWebOperation(ExposableWebEndpoint endpoint,
 			WebOperation operation, ServletWebOperation servletWebOperation) {
 		return new SecureServletWebOperation(servletWebOperation,
-				this.securityInterceptor, endpoint.getEndpointId());
+				this.securityInterceptor, endpoint.getId());
 	}
 
 	@Override
@@ -77,7 +76,7 @@ class CloudFoundryWebEndpointServletHandlerMapping
 	protected Map<String, Map<String, Link>> links(HttpServletRequest request,
 			HttpServletResponse response) {
 		SecurityResponse securityResponse = this.securityInterceptor.preHandle(request,
-				null);
+				"");
 		if (!securityResponse.getStatus().equals(HttpStatus.OK)) {
 			sendFailureResponse(response, securityResponse);
 		}
@@ -116,11 +115,10 @@ class CloudFoundryWebEndpointServletHandlerMapping
 
 		private final CloudFoundrySecurityInterceptor securityInterceptor;
 
-		private final EndpointId endpointId;
+		private final String endpointId;
 
 		SecureServletWebOperation(ServletWebOperation delegate,
-				CloudFoundrySecurityInterceptor securityInterceptor,
-				EndpointId endpointId) {
+				CloudFoundrySecurityInterceptor securityInterceptor, String endpointId) {
 			this.delegate = delegate;
 			this.securityInterceptor = securityInterceptor;
 			this.endpointId = endpointId;
@@ -136,7 +134,6 @@ class CloudFoundryWebEndpointServletHandlerMapping
 			}
 			return this.delegate.handle(request, body);
 		}
-
 	}
 
 }

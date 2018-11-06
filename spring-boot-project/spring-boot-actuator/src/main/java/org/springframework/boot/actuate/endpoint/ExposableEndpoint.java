@@ -29,10 +29,10 @@ import java.util.Collection;
 public interface ExposableEndpoint<O extends Operation> {
 
 	/**
-	 * Return the endpoint ID.
-	 * @return the endpoint ID
+	 * Returns the id of the endpoint.
+	 * @return the id
 	 */
-	EndpointId getEndpointId();
+	String getId();
 
 	/**
 	 * Returns if the endpoint is enabled by default.

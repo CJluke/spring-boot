@@ -28,7 +28,7 @@ import org.springframework.core.convert.ConverterNotFoundException;
  * {@link ConverterNotFoundException}s.
  *
  * @author Madhura Bhave
- * @since 2.0.1
+ * @since 2.0.0
  */
 public class IgnoreTopLevelConverterNotFoundBindHandler extends AbstractBindHandler {
 

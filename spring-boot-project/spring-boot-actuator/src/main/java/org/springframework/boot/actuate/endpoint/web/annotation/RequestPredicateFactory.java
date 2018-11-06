@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.OperationType;
 import org.springframework.boot.actuate.endpoint.annotation.DiscoveredOperationMethod;
 import org.springframework.boot.actuate.endpoint.annotation.Selector;
@@ -51,7 +50,7 @@ class RequestPredicateFactory {
 		this.endpointMediaTypes = endpointMediaTypes;
 	}
 
-	public WebOperationRequestPredicate getRequestPredicate(EndpointId endpointId,
+	public WebOperationRequestPredicate getRequestPredicate(String endpointId,
 			String rootPath, DiscoveredOperationMethod operationMethod) {
 		Method method = operationMethod.getMethod();
 		String path = getPath(rootPath, method);

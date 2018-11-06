@@ -61,14 +61,8 @@ public class ApplicationPid {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == this) {
-			return true;
-		}
-		if (obj != null && obj instanceof ApplicationPid) {
-			return ObjectUtils.nullSafeEquals(this.pid, ((ApplicationPid) obj).pid);
-		}
-		return false;
+	public String toString() {
+		return (this.pid == null ? "???" : this.pid);
 	}
 
 	@Override
@@ -77,8 +71,14 @@ public class ApplicationPid {
 	}
 
 	@Override
-	public String toString() {
-		return (this.pid != null) ? this.pid : "???";
+	public boolean equals(Object obj) {
+		if (obj == this) {
+			return true;
+		}
+		if (obj != null && obj instanceof ApplicationPid) {
+			return ObjectUtils.nullSafeEquals(this.pid, ((ApplicationPid) obj).pid);
+		}
+		return false;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package org.springframework.boot.autoconfigure.mongo.embedded;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.flapdoodle.embed.mongo.distribution.Feature;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.convert.DataSizeUnit;
-import org.springframework.util.unit.DataSize;
-import org.springframework.util.unit.DataUnit;
 
 /**
  * Configuration properties for Embedded Mongo.
@@ -38,15 +37,15 @@ public class EmbeddedMongoProperties {
 	/**
 	 * Version of Mongo to use.
 	 */
-	private String version = "3.5.5";
+	private String version = "3.2.2";
 
 	private final Storage storage = new Storage();
 
 	/**
-	 * Comma-separated list of features to enable. Uses the defaults of the configured
-	 * version by default.
+	 * Comma-separated list of features to enable.
 	 */
-	private Set<Feature> features = null;
+	private Set<Feature> features = new HashSet<>(
+			Collections.singletonList(Feature.SYNC_DELAY));
 
 	public String getVersion() {
 		return this.version;
@@ -71,10 +70,9 @@ public class EmbeddedMongoProperties {
 	public static class Storage {
 
 		/**
-		 * Maximum size of the oplog.
+		 * Maximum size of the oplog, in megabytes.
 		 */
-		@DataSizeUnit(DataUnit.MEGABYTES)
-		private DataSize oplogSize;
+		private Integer oplogSize;
 
 		/**
 		 * Name of the replica set.
@@ -86,11 +84,11 @@ public class EmbeddedMongoProperties {
 		 */
 		private String databaseDir;
 
-		public DataSize getOplogSize() {
+		public Integer getOplogSize() {
 			return this.oplogSize;
 		}
 
-		public void setOplogSize(DataSize oplogSize) {
+		public void setOplogSize(Integer oplogSize) {
 			this.oplogSize = oplogSize;
 		}
 

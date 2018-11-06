@@ -16,14 +16,11 @@
 
 package org.springframework.boot.context.properties;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -52,37 +49,37 @@ class ConversionServiceDeducer {
 					ConversionService.class);
 		}
 		catch (NoSuchBeanDefinitionException ex) {
-			return new Factory(this.applicationContext.getAutowireCapableBeanFactory())
-					.create();
+			return this.applicationContext.getAutowireCapableBeanFactory()
+					.createBean(Factory.class).create();
 		}
 	}
 
 	private static class Factory {
 
-		@SuppressWarnings("rawtypes")
-		private final List<Converter> converters;
+		private List<Converter<?, ?>> converters = Collections.emptyList();
 
-		private final List<GenericConverter> genericConverters;
+		private List<GenericConverter> genericConverters = Collections.emptyList();
 
-		Factory(BeanFactory beanFactory) {
-			this.converters = beans(beanFactory, Converter.class,
-					ConfigurationPropertiesBinding.VALUE);
-			this.genericConverters = beans(beanFactory, GenericConverter.class,
-					ConfigurationPropertiesBinding.VALUE);
+		/**
+		 * A list of custom converters (in addition to the defaults) to use when
+		 * converting properties for binding.
+		 * @param converters the converters to set
+		 */
+		@Autowired(required = false)
+		@ConfigurationPropertiesBinding
+		public void setConverters(List<Converter<?, ?>> converters) {
+			this.converters = converters;
 		}
 
-		private <T> List<T> beans(BeanFactory beanFactory, Class<T> type,
-				String qualifier) {
-			if (beanFactory instanceof ListableBeanFactory) {
-				return beans(type, qualifier, (ListableBeanFactory) beanFactory);
-			}
-			return Collections.emptyList();
-		}
-
-		private <T> List<T> beans(Class<T> type, String qualifier,
-				ListableBeanFactory beanFactory) {
-			return new ArrayList<T>(BeanFactoryAnnotationUtils
-					.qualifiedBeansOfType(beanFactory, type, qualifier).values());
+		/**
+		 * A list of custom converters (in addition to the defaults) to use when
+		 * converting properties for binding.
+		 * @param converters the converters to set
+		 */
+		@Autowired(required = false)
+		@ConfigurationPropertiesBinding
+		public void setGenericConverters(List<GenericConverter> converters) {
+			this.genericConverters = converters;
 		}
 
 		public ConversionService create() {

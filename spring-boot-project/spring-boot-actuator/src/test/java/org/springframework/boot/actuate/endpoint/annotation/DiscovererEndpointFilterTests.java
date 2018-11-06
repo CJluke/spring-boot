@@ -18,7 +18,9 @@ package org.springframework.boot.actuate.endpoint.annotation;
 
 import java.util.Collection;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.actuate.endpoint.EndpointFilter;
 import org.springframework.boot.actuate.endpoint.ExposableEndpoint;
@@ -28,7 +30,6 @@ import org.springframework.boot.actuate.endpoint.invoke.ParameterValueMapper;
 import org.springframework.context.ApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -39,11 +40,14 @@ import static org.mockito.Mockito.mock;
  */
 public class DiscovererEndpointFilterTests {
 
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void createWhenDiscovererIsNullShouldThrowException() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new TestDiscovererEndpointFilter(null))
-				.withMessageContaining("Discoverer must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Discoverer must not be null");
+		new TestDiscovererEndpointFilter(null);
 	}
 
 	@Test

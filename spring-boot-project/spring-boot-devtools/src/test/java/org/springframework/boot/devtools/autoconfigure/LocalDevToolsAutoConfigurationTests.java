@@ -28,11 +28,11 @@ import org.apache.jasper.EmbeddedServletOptions;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration;
@@ -55,7 +55,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -70,6 +69,9 @@ import static org.mockito.Mockito.verify;
  * @author Vladimir Tsanev
  */
 public class LocalDevToolsAutoConfigurationTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Rule
 	public MockRestarter mockRestarter = new MockRestarter();
@@ -165,8 +167,8 @@ public class LocalDevToolsAutoConfigurationTests {
 		Map<String, Object> properties = new HashMap<>();
 		properties.put("spring.devtools.livereload.enabled", false);
 		this.context = initializeAndRun(Config.class, properties);
-		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-				.isThrownBy(() -> this.context.getBean(OptionalLiveReloadServer.class));
+		this.thrown.expect(NoSuchBeanDefinitionException.class);
+		this.context.getBean(OptionalLiveReloadServer.class);
 	}
 
 	@Test
@@ -200,8 +202,8 @@ public class LocalDevToolsAutoConfigurationTests {
 		Map<String, Object> properties = new HashMap<>();
 		properties.put("spring.devtools.restart.enabled", false);
 		this.context = initializeAndRun(Config.class, properties);
-		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-				.isThrownBy(() -> this.context.getBean(ClassPathFileSystemWatcher.class));
+		this.thrown.expect(NoSuchBeanDefinitionException.class);
+		this.context.getBean(ClassPathFileSystemWatcher.class);
 	}
 
 	@Test
@@ -279,7 +281,7 @@ public class LocalDevToolsAutoConfigurationTests {
 	}
 
 	@Configuration
-	@ImportAutoConfiguration({ ServletWebServerFactoryAutoConfiguration.class,
+	@Import({ ServletWebServerFactoryAutoConfiguration.class,
 			LocalDevToolsAutoConfiguration.class, ThymeleafAutoConfiguration.class })
 	public static class ConfigWithMockLiveReload {
 

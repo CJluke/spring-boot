@@ -31,7 +31,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Profiles;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -73,8 +72,7 @@ public class SpringApplicationBuilderTests {
 		this.context = application.run();
 		assertThat(this.context).isInstanceOf(StaticApplicationContext.class);
 		assertThat(this.context.getEnvironment().getProperty("foo")).isEqualTo("bucket");
-		assertThat(this.context.getEnvironment().acceptsProfiles(Profiles.of("foo")))
-				.isTrue();
+		assertThat(this.context.getEnvironment().acceptsProfiles("foo")).isTrue();
 	}
 
 	@Test
@@ -207,12 +205,11 @@ public class SpringApplicationBuilderTests {
 				ExampleConfig.class).profiles("node").properties("transport=redis")
 						.child(ChildConfig.class).web(WebApplicationType.NONE);
 		this.context = application.run();
-		assertThat(this.context.getEnvironment().acceptsProfiles(Profiles.of("node")))
-				.isTrue();
+		assertThat(this.context.getEnvironment().acceptsProfiles("node")).isTrue();
 		assertThat(this.context.getEnvironment().getProperty("transport"))
 				.isEqualTo("redis");
-		assertThat(this.context.getParent().getEnvironment()
-				.acceptsProfiles(Profiles.of("node"))).isTrue();
+		assertThat(this.context.getParent().getEnvironment().acceptsProfiles("node"))
+				.isTrue();
 		assertThat(this.context.getParent().getEnvironment().getProperty("transport"))
 				.isEqualTo("redis");
 		// only defined in node profile
@@ -226,10 +223,10 @@ public class SpringApplicationBuilderTests {
 						.child(ChildConfig.class).profiles("admin")
 						.web(WebApplicationType.NONE);
 		this.context = application.run();
-		assertThat(this.context.getEnvironment()
-				.acceptsProfiles(Profiles.of("node", "admin"))).isTrue();
-		assertThat(this.context.getParent().getEnvironment()
-				.acceptsProfiles(Profiles.of("admin"))).isFalse();
+		assertThat(this.context.getEnvironment().acceptsProfiles("node", "admin"))
+				.isTrue();
+		assertThat(this.context.getParent().getEnvironment().acceptsProfiles("admin"))
+				.isFalse();
 	}
 
 	@Test
@@ -240,12 +237,12 @@ public class SpringApplicationBuilderTests {
 				.profiles("admin").web(WebApplicationType.NONE);
 		shared.profiles("parent");
 		this.context = application.run();
-		assertThat(this.context.getEnvironment()
-				.acceptsProfiles(Profiles.of("node", "admin"))).isTrue();
-		assertThat(this.context.getParent().getEnvironment()
-				.acceptsProfiles(Profiles.of("node", "parent"))).isTrue();
-		assertThat(this.context.getParent().getEnvironment()
-				.acceptsProfiles(Profiles.of("admin"))).isFalse();
+		assertThat(this.context.getEnvironment().acceptsProfiles("node", "admin"))
+				.isTrue();
+		assertThat(this.context.getParent().getEnvironment().acceptsProfiles("node",
+				"parent")).isTrue();
+		assertThat(this.context.getParent().getEnvironment().acceptsProfiles("admin"))
+				.isFalse();
 	}
 
 	@Test
@@ -256,12 +253,12 @@ public class SpringApplicationBuilderTests {
 						.child(ChildConfig.class).profiles("admin")
 						.web(WebApplicationType.NONE);
 		this.context = application.run();
-		assertThat(this.context.getEnvironment()
-				.acceptsProfiles(Profiles.of("node", "admin"))).isTrue();
+		assertThat(this.context.getEnvironment().acceptsProfiles("node", "admin"))
+				.isTrue();
 		// Now they share an Environment explicitly so there's no way to keep the profiles
 		// separate
-		assertThat(this.context.getParent().getEnvironment()
-				.acceptsProfiles(Profiles.of("admin"))).isTrue();
+		assertThat(this.context.getParent().getEnvironment().acceptsProfiles("admin"))
+				.isTrue();
 	}
 
 	@Test

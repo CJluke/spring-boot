@@ -18,6 +18,7 @@ package org.springframework.boot.docs.web.security;
 
 import org.springframework.boot.autoconfigure.security.reactive.PathRequest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
@@ -26,19 +27,20 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
  *
  * @author Madhura Bhave
  */
+@EnableWebFluxSecurity
 public class CustomWebFluxSecurityExample {
 
 	// @formatter:off
 	// tag::configuration[]
 	@Bean
 	public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-		return http
+		http
 			.authorizeExchange()
 				.matchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 				.pathMatchers("/foo", "/bar")
 					.authenticated().and()
-				.formLogin().and()
-			.build();
+				.formLogin();
+		return http.build();
 	}
 	// end::configuration[]
 	// @formatter:on

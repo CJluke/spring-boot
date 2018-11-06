@@ -37,7 +37,6 @@ import org.springframework.util.StringUtils;
  * @author Andy Wilkinson
  * @author Josh Thornhill
  * @author Gary Russell
- * @author Artsiom Yudovin
  */
 @ConfigurationProperties(prefix = "spring.rabbitmq")
 public class RabbitProperties {
@@ -207,7 +206,7 @@ public class RabbitProperties {
 			return this.username;
 		}
 		Address address = this.parsedAddresses.get(0);
-		return (address.username != null) ? address.username : this.username;
+		return address.username == null ? this.username : address.username;
 	}
 
 	public void setUsername(String username) {
@@ -230,7 +229,7 @@ public class RabbitProperties {
 			return getPassword();
 		}
 		Address address = this.parsedAddresses.get(0);
-		return (address.password != null) ? address.password : getPassword();
+		return address.password == null ? getPassword() : address.password;
 	}
 
 	public void setPassword(String password) {
@@ -257,11 +256,11 @@ public class RabbitProperties {
 			return getVirtualHost();
 		}
 		Address address = this.parsedAddresses.get(0);
-		return (address.virtualHost != null) ? address.virtualHost : getVirtualHost();
+		return address.virtualHost == null ? getVirtualHost() : address.virtualHost;
 	}
 
 	public void setVirtualHost(String virtualHost) {
-		this.virtualHost = "".equals(virtualHost) ? "/" : virtualHost;
+		this.virtualHost = ("".equals(virtualHost) ? "/" : virtualHost);
 	}
 
 	public Duration getRequestedHeartbeat() {
@@ -350,16 +349,6 @@ public class RabbitProperties {
 		 */
 		private String algorithm;
 
-		/**
-		 * Whether to enable server side certificate validation.
-		 */
-		private boolean validateServerCertificate = true;
-
-		/**
-		 * Whether to enable hostname verification.
-		 */
-		private boolean verifyHostname = true;
-
 		public boolean isEnabled() {
 			return this.enabled;
 		}
@@ -424,22 +413,6 @@ public class RabbitProperties {
 			this.algorithm = sslAlgorithm;
 		}
 
-		public boolean isValidateServerCertificate() {
-			return this.validateServerCertificate;
-		}
-
-		public void setValidateServerCertificate(boolean validateServerCertificate) {
-			this.validateServerCertificate = validateServerCertificate;
-		}
-
-		public boolean getVerifyHostname() {
-			return this.verifyHostname;
-		}
-
-		public void setVerifyHostname(boolean verifyHostname) {
-			this.verifyHostname = verifyHostname;
-		}
-
 	}
 
 	public static class Cache {
@@ -485,7 +458,6 @@ public class RabbitProperties {
 			public void setCheckoutTimeout(Duration checkoutTimeout) {
 				this.checkoutTimeout = checkoutTimeout;
 			}
-
 		}
 
 		public static class Connection {
@@ -577,8 +549,8 @@ public class RabbitProperties {
 		private AcknowledgeMode acknowledgeMode;
 
 		/**
-		 * Maximum number of unacknowledged messages that can be outstanding at each
-		 * consumer.
+		 * Number of messages to be handled in a single request. It should be greater than
+		 * or equal to the transaction size (if used).
 		 */
 		private Integer prefetch;
 
@@ -637,8 +609,6 @@ public class RabbitProperties {
 			this.idleEventInterval = idleEventInterval;
 		}
 
-		public abstract boolean isMissingQueuesFatal();
-
 		public ListenerRetry getRetry() {
 			return this.retry;
 		}
@@ -661,17 +631,11 @@ public class RabbitProperties {
 		private Integer maxConcurrency;
 
 		/**
-		 * Number of messages to be processed between acks when the acknowledge mode is
-		 * AUTO. If larger than prefetch, prefetch will be increased to this value.
+		 * Number of messages to be processed in a transaction. That is, the number of
+		 * messages between acks. For best results, it should be less than or equal to the
+		 * prefetch count.
 		 */
 		private Integer transactionSize;
-
-		/**
-		 * Whether to fail if the queues declared by the container are not available on
-		 * the broker and/or whether to stop the container if one or more queues are
-		 * deleted at runtime.
-		 */
-		private boolean missingQueuesFatal = true;
 
 		public Integer getConcurrency() {
 			return this.concurrency;
@@ -697,15 +661,6 @@ public class RabbitProperties {
 			this.transactionSize = transactionSize;
 		}
 
-		@Override
-		public boolean isMissingQueuesFatal() {
-			return this.missingQueuesFatal;
-		}
-
-		public void setMissingQueuesFatal(boolean missingQueuesFatal) {
-			this.missingQueuesFatal = missingQueuesFatal;
-		}
-
 	}
 
 	/**
@@ -718,27 +673,12 @@ public class RabbitProperties {
 		 */
 		private Integer consumersPerQueue;
 
-		/**
-		 * Whether to fail if the queues declared by the container are not available on
-		 * the broker.
-		 */
-		private boolean missingQueuesFatal = false;
-
 		public Integer getConsumersPerQueue() {
 			return this.consumersPerQueue;
 		}
 
 		public void setConsumersPerQueue(Integer consumersPerQueue) {
 			this.consumersPerQueue = consumersPerQueue;
-		}
-
-		@Override
-		public boolean isMissingQueuesFatal() {
-			return this.missingQueuesFatal;
-		}
-
-		public void setMissingQueuesFatal(boolean missingQueuesFatal) {
-			this.missingQueuesFatal = missingQueuesFatal;
 		}
 
 	}
@@ -771,12 +711,6 @@ public class RabbitProperties {
 		 * Value of a default routing key to use for send operations.
 		 */
 		private String routingKey = "";
-
-		/**
-		 * Name of the default queue to receive messages from when none is specified
-		 * explicitly.
-		 */
-		private String queue;
 
 		public Retry getRetry() {
 			return this.retry;
@@ -820,14 +754,6 @@ public class RabbitProperties {
 
 		public void setRoutingKey(String routingKey) {
 			this.routingKey = routingKey;
-		}
-
-		public String getQueue() {
-			return this.queue;
-		}
-
-		public void setQueue(String queue) {
-			this.queue = queue;
 		}
 
 	}

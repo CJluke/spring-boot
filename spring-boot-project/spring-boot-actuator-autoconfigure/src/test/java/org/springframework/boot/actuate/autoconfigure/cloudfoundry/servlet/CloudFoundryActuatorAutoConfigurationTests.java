@@ -24,10 +24,8 @@ import org.junit.Test;
 import org.springframework.boot.actuate.autoconfigure.endpoint.EndpointAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.health.HealthEndpointAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.health.HealthIndicatorAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.web.server.ManagementContextAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.web.servlet.ServletManagementContextAutoConfiguration;
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.http.ActuatorMediaType;
@@ -237,8 +235,7 @@ public class CloudFoundryActuatorAutoConfigurationTests {
 					Collection<ExposableWebEndpoint> endpoints = handlerMapping
 							.getEndpoints();
 					assertThat(endpoints.stream()
-							.filter((candidate) -> EndpointId.of("test")
-									.equals(candidate.getEndpointId()))
+							.filter((candidate) -> "test".equals(candidate.getId()))
 							.findFirst()).isNotEmpty();
 				});
 	}
@@ -256,8 +253,7 @@ public class CloudFoundryActuatorAutoConfigurationTests {
 					Collection<ExposableWebEndpoint> endpoints = handlerMapping
 							.getEndpoints();
 					ExposableWebEndpoint endpoint = endpoints.stream()
-							.filter((candidate) -> EndpointId.of("test")
-									.equals(candidate.getEndpointId()))
+							.filter((candidate) -> "test".equals(candidate.getId()))
 							.findFirst().get();
 					Collection<WebOperation> operations = endpoint.getOperations();
 					assertThat(operations).hasSize(1);
@@ -274,17 +270,15 @@ public class CloudFoundryActuatorAutoConfigurationTests {
 						"vcap.application.application_id:my-app-id",
 						"vcap.application.cf_api:http://my-cloud-controller.com")
 				.withConfiguration(
-						AutoConfigurations.of(HealthIndicatorAutoConfiguration.class,
-								HealthEndpointAutoConfiguration.class))
+						AutoConfigurations.of(HealthEndpointAutoConfiguration.class))
 				.run((context) -> {
 					Collection<ExposableWebEndpoint> endpoints = context
 							.getBean("cloudFoundryWebEndpointServletHandlerMapping",
 									CloudFoundryWebEndpointServletHandlerMapping.class)
 							.getEndpoints();
 					ExposableWebEndpoint endpoint = endpoints.iterator().next();
-					assertThat(endpoint.getOperations()).hasSize(3);
-					WebOperation webOperation = findOperationWithRequestPath(endpoint,
-							"health");
+					WebOperation webOperation = endpoint.getOperations().iterator()
+							.next();
 					Object invoker = ReflectionTestUtils.getField(webOperation,
 							"invoker");
 					assertThat(ReflectionTestUtils.getField(invoker, "target"))
@@ -296,17 +290,6 @@ public class CloudFoundryActuatorAutoConfigurationTests {
 			ApplicationContext context) {
 		return context.getBean("cloudFoundryWebEndpointServletHandlerMapping",
 				CloudFoundryWebEndpointServletHandlerMapping.class);
-	}
-
-	private WebOperation findOperationWithRequestPath(ExposableWebEndpoint endpoint,
-			String requestPath) {
-		for (WebOperation operation : endpoint.getOperations()) {
-			if (operation.getRequestPredicate().getPath().equals(requestPath)) {
-				return operation;
-			}
-		}
-		throw new IllegalStateException("No operation found with request path "
-				+ requestPath + " from " + endpoint.getOperations());
 	}
 
 	@Configuration

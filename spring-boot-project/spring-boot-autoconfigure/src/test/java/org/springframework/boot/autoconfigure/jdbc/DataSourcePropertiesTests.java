@@ -16,13 +16,14 @@
 
 package org.springframework.boot.autoconfigure.jdbc;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.context.FilteredClassLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Tests for {@link DataSourceProperties}.
@@ -33,13 +34,16 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  */
 public class DataSourcePropertiesTests {
 
+	@Rule
+	public final ExpectedException thrown = ExpectedException.none();
+
 	@Test
 	public void determineDriver() {
 		DataSourceProperties properties = new DataSourceProperties();
 		properties.setUrl("jdbc:mysql://mydb");
 		assertThat(properties.getDriverClassName()).isNull();
 		assertThat(properties.determineDriverClassName())
-				.isEqualTo("com.mysql.cj.jdbc.Driver");
+				.isEqualTo("com.mysql.jdbc.Driver");
 	}
 
 	@Test
@@ -67,10 +71,9 @@ public class DataSourcePropertiesTests {
 		properties.setBeanClassLoader(
 				new FilteredClassLoader("org.h2", "org.apache.derby", "org.hsqldb"));
 		properties.afterPropertiesSet();
-		assertThatExceptionOfType(
-				DataSourceProperties.DataSourceBeanCreationException.class)
-						.isThrownBy(properties::determineUrl)
-						.withMessageContaining("Failed to determine suitable jdbc url");
+		this.thrown.expect(DataSourceProperties.DataSourceBeanCreationException.class);
+		this.thrown.expectMessage("Failed to determine suitable jdbc url");
+		properties.determineUrl();
 	}
 
 	@Test

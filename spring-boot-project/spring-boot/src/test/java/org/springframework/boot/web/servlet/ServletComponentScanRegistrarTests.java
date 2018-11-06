@@ -17,7 +17,9 @@
 package org.springframework.boot.web.servlet;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -25,7 +27,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationConfigurationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 
 /**
  * Tests for {@link ServletComponentScanRegistrar}
@@ -35,6 +38,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class ServletComponentScanRegistrarTests {
 
 	private AnnotationConfigApplicationContext context;
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@After
 	public void after() {
@@ -84,14 +90,11 @@ public class ServletComponentScanRegistrarTests {
 
 	@Test
 	public void packagesConfiguredWithBothValueAndBasePackages() {
-		assertThatExceptionOfType(AnnotationConfigurationException.class)
-				.isThrownBy(() -> {
-					this.context = new AnnotationConfigApplicationContext(
-							ValueAndBasePackages.class);
-				}).withMessageContaining("'value'")
-				.withMessageContaining("'basePackages'")
-				.withMessageContaining("com.example.foo")
-				.withMessageContaining("com.example.bar");
+		this.thrown.expect(AnnotationConfigurationException.class);
+		this.thrown.expectMessage(allOf(containsString("'value'"),
+				containsString("'basePackages'"), containsString("com.example.foo"),
+				containsString("com.example.bar")));
+		this.context = new AnnotationConfigApplicationContext(ValueAndBasePackages.class);
 	}
 
 	@Test

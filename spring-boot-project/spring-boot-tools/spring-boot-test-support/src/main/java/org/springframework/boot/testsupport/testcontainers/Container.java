@@ -24,7 +24,6 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.FailureDetectingExternalResource;
 import org.testcontainers.containers.GenericContainer;
 
 /**
@@ -65,12 +64,11 @@ class Container implements TestRule {
 		try {
 			DockerClientFactory.instance().client();
 		}
-		catch (Throwable ex) {
+		catch (Throwable t) {
 			return new SkipStatement();
 		}
 		this.container = this.containerFactory.get();
-		return ((FailureDetectingExternalResource) this.container).apply(base,
-				description);
+		return this.container.apply(base, description);
 	}
 
 	public int getMappedPort() {

@@ -31,7 +31,9 @@ import javax.servlet.ServletResponse;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InOrder;
@@ -67,8 +69,6 @@ import org.springframework.web.context.request.SessionScope;
 import org.springframework.web.filter.GenericFilterBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -85,6 +85,9 @@ import static org.mockito.Mockito.withSettings;
  * @author Stephane Nicoll
  */
 public class ServletWebServerApplicationContextTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	private ServletWebServerApplicationContext context;
 
@@ -172,7 +175,8 @@ public class ServletWebServerApplicationContextTests {
 	public void cannotSecondRefresh() {
 		addWebServerFactoryBean();
 		this.context.refresh();
-		assertThatIllegalStateException().isThrownBy(() -> this.context.refresh());
+		this.thrown.expect(IllegalStateException.class);
+		this.context.refresh();
 	}
 
 	@Test
@@ -186,10 +190,11 @@ public class ServletWebServerApplicationContextTests {
 
 	@Test
 	public void missingServletWebServerFactory() {
-		assertThatExceptionOfType(ApplicationContextException.class)
-				.isThrownBy(() -> this.context.refresh()).withMessageContaining(
-						"Unable to start ServletWebServerApplicationContext due to missing "
-								+ "ServletWebServerFactory bean");
+		this.thrown.expect(ApplicationContextException.class);
+		this.thrown.expectMessage(
+				"Unable to start ServletWebServerApplicationContext due to missing "
+						+ "ServletWebServerFactory bean");
+		this.context.refresh();
 	}
 
 	@Test
@@ -197,10 +202,11 @@ public class ServletWebServerApplicationContextTests {
 		addWebServerFactoryBean();
 		this.context.registerBeanDefinition("webServerFactory2",
 				new RootBeanDefinition(MockServletWebServerFactory.class));
-		assertThatExceptionOfType(ApplicationContextException.class)
-				.isThrownBy(() -> this.context.refresh()).withMessageContaining(
-						"Unable to start ServletWebServerApplicationContext due to "
-								+ "multiple ServletWebServerFactory beans");
+		this.thrown.expect(ApplicationContextException.class);
+		this.thrown.expectMessage(
+				"Unable to start ServletWebServerApplicationContext due to "
+						+ "multiple ServletWebServerFactory beans");
+		this.context.refresh();
 
 	}
 
@@ -417,11 +423,11 @@ public class ServletWebServerApplicationContextTests {
 				this.filterCaptor.capture());
 		// Up to this point the filterBean should not have been created, calling
 		// the delegate proxy will trigger creation and an exception
-		assertThatExceptionOfType(BeanCreationException.class).isThrownBy(() -> {
-			this.filterCaptor.getValue().init(new MockFilterConfig());
-			this.filterCaptor.getValue().doFilter(new MockHttpServletRequest(),
-					new MockHttpServletResponse(), new MockFilterChain());
-		}).withMessageContaining("Create FilterBean Failure");
+		this.thrown.expect(BeanCreationException.class);
+		this.thrown.expectMessage("Create FilterBean Failure");
+		this.filterCaptor.getValue().init(new MockFilterConfig());
+		this.filterCaptor.getValue().doFilter(new MockHttpServletRequest(),
+				new MockHttpServletResponse(), new MockFilterChain());
 	}
 
 	@Test

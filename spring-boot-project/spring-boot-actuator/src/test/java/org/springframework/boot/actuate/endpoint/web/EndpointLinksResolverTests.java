@@ -24,7 +24,6 @@ import java.util.Map;
 import org.assertj.core.api.Condition;
 import org.junit.Test;
 
-import org.springframework.boot.actuate.endpoint.EndpointId;
 import org.springframework.boot.actuate.endpoint.OperationType;
 import org.springframework.boot.actuate.endpoint.web.annotation.ExposableControllerEndpoint;
 
@@ -63,7 +62,7 @@ public class EndpointLinksResolverTests {
 		operations.add(operationWithPath("/alpha", "alpha"));
 		operations.add(operationWithPath("/alpha/{name}", "alpha-name"));
 		ExposableWebEndpoint endpoint = mock(ExposableWebEndpoint.class);
-		given(endpoint.getEndpointId()).willReturn(EndpointId.of("alpha"));
+		given(endpoint.getId()).willReturn("alpha");
 		given(endpoint.isEnableByDefault()).willReturn(true);
 		given(endpoint.getOperations()).willReturn(operations);
 		String requestUrl = "https://api.example.com/actuator";
@@ -81,7 +80,7 @@ public class EndpointLinksResolverTests {
 	@Test
 	public void resolvedLinksContainsALinkForServletEndpoint() {
 		ExposableServletEndpoint servletEndpoint = mock(ExposableServletEndpoint.class);
-		given(servletEndpoint.getEndpointId()).willReturn(EndpointId.of("alpha"));
+		given(servletEndpoint.getId()).willReturn("alpha");
 		given(servletEndpoint.isEnableByDefault()).willReturn(true);
 		given(servletEndpoint.getRootPath()).willReturn("alpha");
 		String requestUrl = "https://api.example.com/actuator";
@@ -98,7 +97,7 @@ public class EndpointLinksResolverTests {
 	public void resolvedLinksContainsALinkForControllerEndpoint() {
 		ExposableControllerEndpoint controllerEndpoint = mock(
 				ExposableControllerEndpoint.class);
-		given(controllerEndpoint.getEndpointId()).willReturn(EndpointId.of("alpha"));
+		given(controllerEndpoint.getId()).willReturn("alpha");
 		given(controllerEndpoint.isEnableByDefault()).willReturn(true);
 		given(controllerEndpoint.getRootPath()).willReturn("alpha");
 		String requestUrl = "https://api.example.com/actuator";

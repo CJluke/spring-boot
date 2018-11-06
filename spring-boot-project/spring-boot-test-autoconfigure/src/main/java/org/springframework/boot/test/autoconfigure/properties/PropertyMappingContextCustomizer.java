@@ -56,14 +56,14 @@ class PropertyMappingContextCustomizer implements ContextCustomizer {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return (obj != null && getClass() == obj.getClass() && this.propertySource
-				.equals(((PropertyMappingContextCustomizer) obj).propertySource));
+	public int hashCode() {
+		return this.propertySource.hashCode();
 	}
 
 	@Override
-	public int hashCode() {
-		return this.propertySource.hashCode();
+	public boolean equals(Object obj) {
+		return (obj != null && getClass() == obj.getClass() && this.propertySource
+				.equals(((PropertyMappingContextCustomizer) obj).propertySource));
 	}
 
 	/**
@@ -115,12 +115,10 @@ class PropertyMappingContextCustomizer implements ContextCustomizer {
 		private String getAnnotationsDescription(Set<Class<?>> annotations) {
 			StringBuilder result = new StringBuilder();
 			for (Class<?> annotation : annotations) {
-				if (result.length() != 0) {
-					result.append(", ");
-				}
-				result.append('@').append(ClassUtils.getShortName(annotation));
+				result.append(result.length() == 0 ? "" : ", ");
+				result.append("@" + ClassUtils.getShortName(annotation));
 			}
-			result.insert(0, (annotations.size() != 1) ? "annotations " : "annotation ");
+			result.insert(0, annotations.size() == 1 ? "annotation " : "annotations ");
 			return result.toString();
 		}
 

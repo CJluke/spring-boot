@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package org.springframework.boot.context.properties.source;
 
-import java.util.Collections;
-
 import org.junit.Test;
 import org.mockito.Answers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * Tests for {@link AliasedConfigurationPropertySource}.
@@ -58,7 +57,7 @@ public class AliasedConfigurationPropertySourceTests {
 	public void containsDescendantOfWhenSourceReturnsUnknownShouldReturnUnknown() {
 		ConfigurationPropertyName name = ConfigurationPropertyName.of("foo");
 		ConfigurationPropertySource source = mock(ConfigurationPropertySource.class,
-				Answers.CALLS_REAL_METHODS);
+				withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 		given(source.containsDescendantOf(name))
 				.willReturn(ConfigurationPropertyState.UNKNOWN);
 		ConfigurationPropertySource aliased = source
@@ -71,7 +70,7 @@ public class AliasedConfigurationPropertySourceTests {
 	public void containsDescendantOfWhenSourceReturnsPresentShouldReturnPresent() {
 		ConfigurationPropertyName name = ConfigurationPropertyName.of("foo");
 		ConfigurationPropertySource source = mock(ConfigurationPropertySource.class,
-				Answers.CALLS_REAL_METHODS);
+				withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 		given(source.containsDescendantOf(name))
 				.willReturn(ConfigurationPropertyState.PRESENT);
 		given(source.containsDescendantOf(ConfigurationPropertyName.of("bar")))
@@ -86,7 +85,7 @@ public class AliasedConfigurationPropertySourceTests {
 	public void containsDescendantOfWhenAllAreAbsentShouldReturnAbsent() {
 		ConfigurationPropertyName name = ConfigurationPropertyName.of("foo");
 		ConfigurationPropertySource source = mock(ConfigurationPropertySource.class,
-				Answers.CALLS_REAL_METHODS);
+				withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 		given(source.containsDescendantOf(name))
 				.willReturn(ConfigurationPropertyState.ABSENT);
 		given(source.containsDescendantOf(ConfigurationPropertyName.of("bar")))
@@ -101,7 +100,7 @@ public class AliasedConfigurationPropertySourceTests {
 	public void containsDescendantOfWhenAnyIsPresentShouldReturnPresent() {
 		ConfigurationPropertyName name = ConfigurationPropertyName.of("foo");
 		ConfigurationPropertySource source = mock(ConfigurationPropertySource.class,
-				Answers.CALLS_REAL_METHODS);
+				withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 		given(source.containsDescendantOf(name))
 				.willReturn(ConfigurationPropertyState.ABSENT);
 		given(source.containsDescendantOf(ConfigurationPropertyName.of("bar")))
@@ -112,20 +111,10 @@ public class AliasedConfigurationPropertySourceTests {
 				.isEqualTo(ConfigurationPropertyState.PRESENT);
 	}
 
-	@Test
-	public void containsDescendantOfWhenPresentInAliasShouldReturnPresent() {
-		ConfigurationPropertySource source = new MapConfigurationPropertySource(
-				Collections.singletonMap("foo.bar", "foobar"));
-		ConfigurationPropertySource aliased = source
-				.withAliases(new ConfigurationPropertyNameAliases("foo.bar", "baz.foo"));
-		assertThat(aliased.containsDescendantOf(ConfigurationPropertyName.of("baz")))
-				.isEqualTo(ConfigurationPropertyState.PRESENT);
-	}
-
 	private Object getValue(ConfigurationPropertySource source, String name) {
 		ConfigurationProperty property = source
 				.getConfigurationProperty(ConfigurationPropertyName.of(name));
-		return (property != null) ? property.getValue() : null;
+		return (property == null ? null : property.getValue());
 	}
 
 }

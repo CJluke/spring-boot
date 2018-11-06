@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@ import javax.persistence.SequenceGenerator;
 
 @Entity
 public class Person {
-
 	@Id
 	@SequenceGenerator(name = "person_generator", sequenceName = "person_sequence", allocationSize = 1)
 	@GeneratedValue(generator = "person_generator")
 	private Long id;
-
 	private String firstName;
-
 	private String lastName;
 
 	public String getFirstName() {
@@ -54,5 +51,4 @@ public class Person {
 		return "Person [firstName=" + this.firstName + ", lastName=" + this.lastName
 				+ "]";
 	}
-
 }

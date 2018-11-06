@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package org.springframework.boot.autoconfigure.http;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -61,32 +61,34 @@ public class HttpMessageConvertersAutoConfiguration {
 	private final List<HttpMessageConverter<?>> converters;
 
 	public HttpMessageConvertersAutoConfiguration(
-			ObjectProvider<HttpMessageConverter<?>> convertersProvider) {
-		this.converters = convertersProvider.orderedStream().collect(Collectors.toList());
+			ObjectProvider<List<HttpMessageConverter<?>>> convertersProvider) {
+		this.converters = convertersProvider.getIfAvailable();
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
 	public HttpMessageConverters messageConverters() {
-		return new HttpMessageConverters(this.converters);
+		return new HttpMessageConverters(
+				this.converters == null ? Collections.emptyList() : this.converters);
 	}
 
 	@Configuration
 	@ConditionalOnClass(StringHttpMessageConverter.class)
-	@EnableConfigurationProperties(HttpProperties.class)
+	@EnableConfigurationProperties(HttpEncodingProperties.class)
 	protected static class StringHttpMessageConverterConfiguration {
 
-		private final HttpProperties.Encoding properties;
+		private final HttpEncodingProperties encodingProperties;
 
-		protected StringHttpMessageConverterConfiguration(HttpProperties httpProperties) {
-			this.properties = httpProperties.getEncoding();
+		protected StringHttpMessageConverterConfiguration(
+				HttpEncodingProperties encodingProperties) {
+			this.encodingProperties = encodingProperties;
 		}
 
 		@Bean
 		@ConditionalOnMissingBean
 		public StringHttpMessageConverter stringHttpMessageConverter() {
 			StringHttpMessageConverter converter = new StringHttpMessageConverter(
-					this.properties.getCharset());
+					this.encodingProperties.getCharset());
 			converter.setWriteAcceptCharset(false);
 			return converter;
 		}

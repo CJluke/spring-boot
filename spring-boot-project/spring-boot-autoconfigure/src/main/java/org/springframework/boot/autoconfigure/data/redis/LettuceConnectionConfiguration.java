@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package org.springframework.boot.autoconfigure.data.redis;
 
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.List;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.resource.ClientResources;
@@ -50,15 +52,16 @@ class LettuceConnectionConfiguration extends RedisConnectionConfiguration {
 
 	private final RedisProperties properties;
 
-	private final ObjectProvider<LettuceClientConfigurationBuilderCustomizer> builderCustomizers;
+	private final List<LettuceClientConfigurationBuilderCustomizer> builderCustomizers;
 
 	LettuceConnectionConfiguration(RedisProperties properties,
 			ObjectProvider<RedisSentinelConfiguration> sentinelConfigurationProvider,
 			ObjectProvider<RedisClusterConfiguration> clusterConfigurationProvider,
-			ObjectProvider<LettuceClientConfigurationBuilderCustomizer> builderCustomizers) {
+			ObjectProvider<List<LettuceClientConfigurationBuilderCustomizer>> builderCustomizers) {
 		super(properties, sentinelConfigurationProvider, clusterConfigurationProvider);
 		this.properties = properties;
-		this.builderCustomizers = builderCustomizers;
+		this.builderCustomizers = builderCustomizers
+				.getIfAvailable(Collections::emptyList);
 	}
 
 	@Bean(destroyMethod = "shutdown")
@@ -136,8 +139,9 @@ class LettuceConnectionConfiguration extends RedisConnectionConfiguration {
 
 	private void customize(
 			LettuceClientConfiguration.LettuceClientConfigurationBuilder builder) {
-		this.builderCustomizers.orderedStream()
-				.forEach((customizer) -> customizer.customize(builder));
+		for (LettuceClientConfigurationBuilderCustomizer customizer : this.builderCustomizers) {
+			customizer.customize(builder);
+		}
 	}
 
 	/**
@@ -150,8 +154,8 @@ class LettuceConnectionConfiguration extends RedisConnectionConfiguration {
 					.poolConfig(getPoolConfig(properties));
 		}
 
-		private GenericObjectPoolConfig<?> getPoolConfig(Pool properties) {
-			GenericObjectPoolConfig<?> config = new GenericObjectPoolConfig<>();
+		private GenericObjectPoolConfig getPoolConfig(Pool properties) {
+			GenericObjectPoolConfig config = new GenericObjectPoolConfig();
 			config.setMaxTotal(properties.getMaxActive());
 			config.setMaxIdle(properties.getMaxIdle());
 			config.setMinIdle(properties.getMinIdle());

@@ -19,10 +19,10 @@ package org.springframework.boot.autoconfigure.web;
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.web.server.Compression;
@@ -38,8 +37,8 @@ import org.springframework.boot.web.server.Http2;
 import org.springframework.boot.web.server.Ssl;
 import org.springframework.boot.web.servlet.server.Jsp;
 import org.springframework.boot.web.servlet.server.Session;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import org.springframework.util.unit.DataSize;
 
 /**
  * {@link ConfigurationProperties} for a web server (e.g. port and path settings).
@@ -55,7 +54,6 @@ import org.springframework.util.unit.DataSize;
  * @author Aurélien Leboulanger
  * @author Brian Clozel
  * @author Olivier Lamy
- * @author Chentao Qu
  */
 @ConfigurationProperties(prefix = "server", ignoreUnknownFields = true)
 public class ServerProperties {
@@ -84,9 +82,9 @@ public class ServerProperties {
 	private String serverHeader;
 
 	/**
-	 * Maximum size of the HTTP message header.
+	 * Maximum size, in bytes, of the HTTP message header.
 	 */
-	private DataSize maxHttpHeaderSize = DataSize.ofKilobytes(8);
+	private int maxHttpHeaderSize = 0; // bytes
 
 	/**
 	 * Time that connectors wait for another HTTP request before closing the connection.
@@ -144,11 +142,11 @@ public class ServerProperties {
 		this.serverHeader = serverHeader;
 	}
 
-	public DataSize getMaxHttpHeaderSize() {
+	public int getMaxHttpHeaderSize() {
 		return this.maxHttpHeaderSize;
 	}
 
-	public void setMaxHttpHeaderSize(DataSize maxHttpHeaderSize) {
+	public void setMaxHttpHeaderSize(int maxHttpHeaderSize) {
 		this.maxHttpHeaderSize = maxHttpHeaderSize;
 	}
 
@@ -216,6 +214,11 @@ public class ServerProperties {
 		 */
 		private String applicationDisplayName = "application";
 
+		/**
+		 * Path of the main dispatcher servlet.
+		 */
+		private String path = "/";
+
 		@NestedConfigurationProperty
 		private final Jsp jsp = new Jsp();
 
@@ -245,6 +248,15 @@ public class ServerProperties {
 			this.applicationDisplayName = displayName;
 		}
 
+		public String getPath() {
+			return this.path;
+		}
+
+		public void setPath(String path) {
+			Assert.notNull(path, "Path must not be null");
+			this.path = path;
+		}
+
 		public Map<String, String> getContextParameters() {
 			return this.contextParameters;
 		}
@@ -255,6 +267,57 @@ public class ServerProperties {
 
 		public Session getSession() {
 			return this.session;
+		}
+
+		public String getServletMapping() {
+			if (this.path.equals("") || this.path.equals("/")) {
+				return "/";
+			}
+			if (this.path.contains("*")) {
+				return this.path;
+			}
+			if (this.path.endsWith("/")) {
+				return this.path + "*";
+			}
+			return this.path + "/*";
+		}
+
+		public String getPath(String path) {
+			String prefix = getServletPrefix();
+			if (!path.startsWith("/")) {
+				path = "/" + path;
+			}
+			return prefix + path;
+		}
+
+		public String getServletPrefix() {
+			String result = this.path;
+			int index = result.indexOf('*');
+			if (index != -1) {
+				result = result.substring(0, index);
+			}
+			if (result.endsWith("/")) {
+				result = result.substring(0, result.length() - 1);
+			}
+			return result;
+		}
+
+		public String[] getPathsArray(Collection<String> paths) {
+			String[] result = new String[paths.size()];
+			int i = 0;
+			for (String path : paths) {
+				result[i++] = getPath(path);
+			}
+			return result;
+		}
+
+		public String[] getPathsArray(String[] paths) {
+			String[] result = new String[paths.length];
+			int i = 0;
+			for (String path : paths) {
+				result[i++] = getPath(path);
+			}
+			return result;
 		}
 
 	}
@@ -270,7 +333,7 @@ public class ServerProperties {
 		private final Accesslog accesslog = new Accesslog();
 
 		/**
-		 * Regular expression that matches proxies that are to be trusted.
+		 * Regular expression matching trusted IP addresses.
 		 */
 		private String internalProxies = "10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|" // 10/8
 				+ "192\\.168\\.\\d{1,3}\\.\\d{1,3}|" // 192.168/16
@@ -278,8 +341,7 @@ public class ServerProperties {
 				+ "127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|" // 127/8
 				+ "172\\.1[6-9]{1}\\.\\d{1,3}\\.\\d{1,3}|" // 172.16/12
 				+ "172\\.2[0-9]{1}\\.\\d{1,3}\\.\\d{1,3}|"
-				+ "172\\.3[0-1]{1}\\.\\d{1,3}\\.\\d{1,3}|" //
-				+ "0:0:0:0:0:0:0:1|::1";
+				+ "172\\.3[0-1]{1}\\.\\d{1,3}\\.\\d{1,3}";
 
 		/**
 		 * Header that holds the incoming protocol, usually named "X-Forwarded-Proto".
@@ -312,38 +374,33 @@ public class ServerProperties {
 		 * is not specified, seconds will be used.
 		 */
 		@DurationUnit(ChronoUnit.SECONDS)
-		private Duration backgroundProcessorDelay = Duration.ofSeconds(10);
+		private Duration backgroundProcessorDelay = Duration.ofSeconds(30);
 
 		/**
-		 * Maximum amount of worker threads.
+		 * Maximum number of worker threads.
 		 */
-		private int maxThreads = 200;
+		private int maxThreads = 0;
 
 		/**
-		 * Minimum amount of worker threads.
+		 * Minimum number of worker threads.
 		 */
-		private int minSpareThreads = 10;
+		private int minSpareThreads = 0;
 
 		/**
-		 * Maximum size of the HTTP post content.
+		 * Maximum size, in bytes, of the HTTP post content.
 		 */
-		private DataSize maxHttpPostSize = DataSize.ofMegabytes(2);
+		private int maxHttpPostSize = 0;
 
 		/**
-		 * Maximum size of the HTTP message header.
+		 * Maximum size, in bytes, of the HTTP message header.
 		 */
-		private DataSize maxHttpHeaderSize = DataSize.ofBytes(0);
-
-		/**
-		 * Maximum amount of request body to swallow.
-		 */
-		private DataSize maxSwallowSize = DataSize.ofMegabytes(2);
+		private int maxHttpHeaderSize = 0;
 
 		/**
 		 * Whether requests to the context root should be redirected by appending a / to
 		 * the path.
 		 */
-		private Boolean redirectContextRoot = true;
+		private Boolean redirectContextRoot;
 
 		/**
 		 * Whether HTTP 1.1 and later location headers generated by a call to sendRedirect
@@ -354,20 +411,20 @@ public class ServerProperties {
 		/**
 		 * Character encoding to use to decode the URI.
 		 */
-		private Charset uriEncoding = StandardCharsets.UTF_8;
+		private Charset uriEncoding;
 
 		/**
 		 * Maximum number of connections that the server accepts and processes at any
 		 * given time. Once the limit has been reached, the operating system may still
 		 * accept connections based on the "acceptCount" property.
 		 */
-		private int maxConnections = 10000;
+		private int maxConnections = 0;
 
 		/**
 		 * Maximum queue length for incoming connection requests when all possible request
 		 * processing threads are in use.
 		 */
-		private int acceptCount = 100;
+		private int acceptCount = 0;
 
 		/**
 		 * Comma-separated list of additional patterns that match jars to ignore for TLD
@@ -397,11 +454,11 @@ public class ServerProperties {
 			this.minSpareThreads = minSpareThreads;
 		}
 
-		public DataSize getMaxHttpPostSize() {
+		public int getMaxHttpPostSize() {
 			return this.maxHttpPostSize;
 		}
 
-		public void setMaxHttpPostSize(DataSize maxHttpPostSize) {
+		public void setMaxHttpPostSize(int maxHttpPostSize) {
 			this.maxHttpPostSize = maxHttpPostSize;
 		}
 
@@ -497,23 +554,12 @@ public class ServerProperties {
 			this.maxConnections = maxConnections;
 		}
 
-		@Deprecated
-		@DeprecatedConfigurationProperty(replacement = "server.max-http-header-size")
-		public DataSize getMaxHttpHeaderSize() {
+		public int getMaxHttpHeaderSize() {
 			return this.maxHttpHeaderSize;
 		}
 
-		@Deprecated
-		public void setMaxHttpHeaderSize(DataSize maxHttpHeaderSize) {
+		public void setMaxHttpHeaderSize(int maxHttpHeaderSize) {
 			this.maxHttpHeaderSize = maxHttpHeaderSize;
-		}
-
-		public DataSize getMaxSwallowSize() {
-			return this.maxSwallowSize;
-		}
-
-		public void setMaxSwallowSize(DataSize maxSwallowSize) {
-			this.maxSwallowSize = maxSwallowSize;
 		}
 
 		public int getAcceptCount() {
@@ -576,7 +622,7 @@ public class ServerProperties {
 			 * Whether to defer inclusion of the date stamp in the file name until rotate
 			 * time.
 			 */
-			private boolean renameOnRotate = false;
+			private boolean renameOnRotate;
 
 			/**
 			 * Date format to place in the log file name.
@@ -587,7 +633,7 @@ public class ServerProperties {
 			 * Set request attributes for the IP address, Hostname, protocol, and port
 			 * used for the request.
 			 */
-			private boolean requestAttributesEnabled = false;
+			private boolean requestAttributesEnabled;
 
 			/**
 			 * Whether to buffer output such that it is flushed only periodically.
@@ -682,22 +728,9 @@ public class ServerProperties {
 		public static class Resource {
 
 			/**
-			 * Whether static resource caching is permitted for this web application.
-			 */
-			private boolean allowCaching = true;
-
-			/**
 			 * Time-to-live of the static resource cache.
 			 */
 			private Duration cacheTtl;
-
-			public boolean isAllowCaching() {
-				return this.allowCaching;
-			}
-
-			public void setAllowCaching(boolean allowCaching) {
-				this.allowCaching = allowCaching;
-			}
 
 			public Duration getCacheTtl() {
 				return this.cacheTtl;
@@ -722,31 +755,29 @@ public class ServerProperties {
 		private final Accesslog accesslog = new Accesslog();
 
 		/**
-		 * Maximum size of the HTTP post or put content.
+		 * Maximum size, in bytes, of the HTTP post or put content.
 		 */
-		private DataSize maxHttpPostSize = DataSize.ofBytes(200000);
+		private int maxHttpPostSize = 0; // bytes
 
 		/**
-		 * Number of acceptor threads to use. When the value is -1, the default, the
-		 * number of acceptors is derived from the operating environment.
+		 * Number of acceptor threads to use.
 		 */
-		private Integer acceptors = -1;
+		private Integer acceptors;
 
 		/**
-		 * Number of selector threads to use. When the value is -1, the default, the
-		 * number of selectors is derived from the operating environment.
+		 * Number of selector threads to use.
 		 */
-		private Integer selectors = -1;
+		private Integer selectors;
 
 		public Accesslog getAccesslog() {
 			return this.accesslog;
 		}
 
-		public DataSize getMaxHttpPostSize() {
+		public int getMaxHttpPostSize() {
 			return this.maxHttpPostSize;
 		}
 
-		public void setMaxHttpPostSize(DataSize maxHttpPostSize) {
+		public void setMaxHttpPostSize(int maxHttpPostSize) {
 			this.maxHttpPostSize = maxHttpPostSize;
 		}
 
@@ -926,7 +957,6 @@ public class ServerProperties {
 			public void setLogLatency(boolean logLatency) {
 				this.logLatency = logLatency;
 			}
-
 		}
 
 	}
@@ -937,31 +967,27 @@ public class ServerProperties {
 	public static class Undertow {
 
 		/**
-		 * Maximum size of the HTTP post content. When the value is -1, the default, the
-		 * size is unlimited.
+		 * Maximum size, in bytes, of the HTTP post content.
 		 */
-		private DataSize maxHttpPostSize = DataSize.ofBytes(-1);
+		private long maxHttpPostSize = 0; // bytes
 
 		/**
-		 * Size of each buffer. The default is derived from the maximum amount of memory
-		 * that is available to the JVM.
+		 * Size of each buffer, in bytes.
 		 */
-		private DataSize bufferSize;
+		private Integer bufferSize;
 
 		/**
-		 * Number of I/O threads to create for the worker. The default is derived from the
-		 * number of available processors.
+		 * Number of I/O threads to create for the worker.
 		 */
 		private Integer ioThreads;
 
 		/**
-		 * Number of worker threads. The default is 8 times the number of I/O threads.
+		 * Number of worker threads.
 		 */
 		private Integer workerThreads;
 
 		/**
-		 * Whether to allocate buffers outside the Java heap. The default is derived from
-		 * the maximum amount of memory that is available to the JVM.
+		 * Whether to allocate buffers outside the Java heap.
 		 */
 		private Boolean directBuffers;
 
@@ -972,19 +998,19 @@ public class ServerProperties {
 
 		private final Accesslog accesslog = new Accesslog();
 
-		public DataSize getMaxHttpPostSize() {
+		public long getMaxHttpPostSize() {
 			return this.maxHttpPostSize;
 		}
 
-		public void setMaxHttpPostSize(DataSize maxHttpPostSize) {
+		public void setMaxHttpPostSize(long maxHttpPostSize) {
 			this.maxHttpPostSize = maxHttpPostSize;
 		}
 
-		public DataSize getBufferSize() {
+		public Integer getBufferSize() {
 			return this.bufferSize;
 		}
 
-		public void setBufferSize(DataSize bufferSize) {
+		public void setBufferSize(Integer bufferSize) {
 			this.bufferSize = bufferSize;
 		}
 

@@ -18,7 +18,7 @@ package org.springframework.boot.actuate.autoconfigure.metrics.export.wavefront;
 
 import io.micrometer.wavefront.WavefrontConfig;
 
-import org.springframework.boot.actuate.autoconfigure.metrics.export.properties.StepRegistryPropertiesConfigAdapter;
+import org.springframework.boot.actuate.autoconfigure.metrics.export.properties.PropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link WavefrontProperties} to a {@link WavefrontConfig}.
@@ -27,8 +27,7 @@ import org.springframework.boot.actuate.autoconfigure.metrics.export.properties.
  * @since 2.0.0
  */
 public class WavefrontPropertiesConfigAdapter
-		extends StepRegistryPropertiesConfigAdapter<WavefrontProperties>
-		implements WavefrontConfig {
+		extends PropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
 
 	public WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
 		super(properties);
@@ -61,7 +60,7 @@ public class WavefrontPropertiesConfigAdapter
 	}
 
 	private String getUriAsString(WavefrontProperties properties) {
-		return (properties.getUri() != null) ? properties.getUri().toString() : null;
+		return properties.getUri() == null ? null : properties.getUri().toString();
 	}
 
 }

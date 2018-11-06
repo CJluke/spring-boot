@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,8 +49,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.HandlerMapping;
-import org.springframework.web.servlet.handler.MatchableHandlerMapping;
-import org.springframework.web.servlet.handler.RequestMatchResult;
 import org.springframework.web.servlet.mvc.condition.ConsumesRequestCondition;
 import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
 import org.springframework.web.servlet.mvc.condition.ProducesRequestCondition;
@@ -69,8 +66,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMappi
  * @since 2.0.0
  */
 public abstract class AbstractWebMvcEndpointHandlerMapping
-		extends RequestMappingInfoHandlerMapping
-		implements InitializingBean, MatchableHandlerMapping {
+		extends RequestMappingInfoHandlerMapping implements InitializingBean {
 
 	private final EndpointMapping endpointMapping;
 
@@ -85,8 +81,6 @@ public abstract class AbstractWebMvcEndpointHandlerMapping
 
 	private final Method handleMethod = ReflectionUtils.findMethod(OperationHandler.class,
 			"handle", HttpServletRequest.class, Map.class);
-
-	private static final RequestMappingInfo.BuilderConfiguration builderConfig = getBuilderConfig();
 
 	/**
 	 * Creates a new {@code WebEndpointHandlerMapping} that provides mappings for the
@@ -129,29 +123,6 @@ public abstract class AbstractWebMvcEndpointHandlerMapping
 		if (StringUtils.hasText(this.endpointMapping.getPath())) {
 			registerLinksMapping();
 		}
-	}
-
-	@Override
-	public RequestMatchResult match(HttpServletRequest request, String pattern) {
-		RequestMappingInfo info = RequestMappingInfo.paths(pattern).options(builderConfig)
-				.build();
-		RequestMappingInfo matchingInfo = info.getMatchingCondition(request);
-		if (matchingInfo == null) {
-			return null;
-		}
-		Set<String> patterns = matchingInfo.getPatternsCondition().getPatterns();
-		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
-		return new RequestMatchResult(patterns.iterator().next(), lookupPath,
-				getPathMatcher());
-	}
-
-	private static RequestMappingInfo.BuilderConfiguration getBuilderConfig() {
-		RequestMappingInfo.BuilderConfiguration config = new RequestMappingInfo.BuilderConfiguration();
-		config.setUrlPathHelper(null);
-		config.setPathMatcher(null);
-		config.setSuffixPatternMatch(false);
-		config.setTrailingSlashMatch(true);
-		return config;
 	}
 
 	private void registerMappingForOperation(ExposableWebEndpoint endpoint,
@@ -205,9 +176,7 @@ public abstract class AbstractWebMvcEndpointHandlerMapping
 
 	private PatternsRequestCondition patternsRequestConditionForPattern(String path) {
 		String[] patterns = new String[] { this.endpointMapping.createSubPath(path) };
-		return new PatternsRequestCondition(patterns, builderConfig.getUrlPathHelper(),
-				builderConfig.getPathMatcher(), builderConfig.useSuffixPatternMatch(),
-				builderConfig.useTrailingSlashMatch());
+		return new PatternsRequestCondition(patterns, null, null, false, true);
 	}
 
 	@Override
@@ -288,7 +257,7 @@ public abstract class AbstractWebMvcEndpointHandlerMapping
 				arguments.putAll(body);
 			}
 			request.getParameterMap().forEach((name, values) -> arguments.put(name,
-					(values.length != 1) ? Arrays.asList(values) : values[0]));
+					values.length == 1 ? values[0] : Arrays.asList(values)));
 			return arguments;
 		}
 
@@ -300,8 +269,8 @@ public abstract class AbstractWebMvcEndpointHandlerMapping
 
 		private Object handleResult(Object result, HttpMethod httpMethod) {
 			if (result == null) {
-				return new ResponseEntity<>((httpMethod != HttpMethod.GET)
-						? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
+				return new ResponseEntity<>(httpMethod == HttpMethod.GET
+						? HttpStatus.NOT_FOUND : HttpStatus.NO_CONTENT);
 			}
 			if (!(result instanceof WebEndpointResponse)) {
 				return result;

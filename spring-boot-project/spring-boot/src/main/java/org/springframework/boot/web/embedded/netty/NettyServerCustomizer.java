@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 
 package org.springframework.boot.web.embedded.netty;
 
-import java.util.function.Function;
-
-import reactor.netty.http.server.HttpServer;
+import reactor.ipc.netty.http.server.HttpServerOptions;
 
 /**
- * Mapping function that can be used to customize a Reactor Netty server instance.
+ * Callback interface that can be used to customize a Reactor Netty server builder.
  *
  * @author Brian Clozel
  * @see NettyReactiveWebServerFactory
- * @since 2.1.0
+ * @since 2.0.0
  */
 @FunctionalInterface
-public interface NettyServerCustomizer extends Function<HttpServer, HttpServer> {
+public interface NettyServerCustomizer {
+
+	/**
+	 * Customize the Netty web server.
+	 * @param builder the server options builder to customize
+	 */
+	void customize(HttpServerOptions.Builder builder);
 
 }

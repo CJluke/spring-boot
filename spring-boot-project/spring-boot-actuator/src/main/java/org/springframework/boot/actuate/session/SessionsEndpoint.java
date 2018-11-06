@@ -52,7 +52,9 @@ public class SessionsEndpoint {
 	@ReadOperation
 	public SessionsReport sessionsForUsername(String username) {
 		Map<String, ? extends Session> sessions = this.sessionRepository
-				.findByPrincipalName(username);
+				.findByIndexNameAndIndexValue(
+						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+						username);
 		return new SessionsReport(sessions);
 	}
 

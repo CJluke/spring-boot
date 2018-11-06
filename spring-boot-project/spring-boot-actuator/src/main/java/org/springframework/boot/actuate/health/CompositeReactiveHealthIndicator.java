@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
+import org.springframework.util.Assert;
+
 /**
  * {@link ReactiveHealthIndicator} that returns health indications from all registered
  * delegates. Provides an alternative {@link Health} for a delegate that reaches a
@@ -35,7 +37,7 @@ import reactor.util.function.Tuple2;
  */
 public class CompositeReactiveHealthIndicator implements ReactiveHealthIndicator {
 
-	private final ReactiveHealthIndicatorRegistry registry;
+	private final Map<String, ReactiveHealthIndicator> indicators;
 
 	private final HealthAggregator healthAggregator;
 
@@ -45,44 +47,17 @@ public class CompositeReactiveHealthIndicator implements ReactiveHealthIndicator
 
 	private final Function<Mono<Health>, Mono<Health>> timeoutCompose;
 
-	/**
-	 * Create a new {@link CompositeReactiveHealthIndicator}.
-	 * @param healthAggregator the health aggregator
-	 * @deprecated since 2.1.0 in favor of
-	 * {@link #CompositeReactiveHealthIndicator(HealthAggregator, ReactiveHealthIndicatorRegistry)}
-	 */
-	@Deprecated
 	public CompositeReactiveHealthIndicator(HealthAggregator healthAggregator) {
 		this(healthAggregator, new LinkedHashMap<>());
 	}
 
-	/**
-	 * Create a new {@link CompositeReactiveHealthIndicator} from the specified
-	 * indicators.
-	 * @param healthAggregator the health aggregator
-	 * @param indicators a map of {@link ReactiveHealthIndicator HealthIndicators} with
-	 * the key being used as an indicator name.
-	 * @deprecated since 2.1.0 in favor of
-	 * {@link #CompositeReactiveHealthIndicator(HealthAggregator, ReactiveHealthIndicatorRegistry)}
-	 */
-	@Deprecated
 	public CompositeReactiveHealthIndicator(HealthAggregator healthAggregator,
 			Map<String, ReactiveHealthIndicator> indicators) {
-		this(healthAggregator, new DefaultReactiveHealthIndicatorRegistry(indicators));
-
-	}
-
-	/**
-	 * Create a new {@link CompositeReactiveHealthIndicator} from the indicators in the
-	 * given {@code registry}.
-	 * @param healthAggregator the health aggregator
-	 * @param registry the registry of {@link ReactiveHealthIndicator HealthIndicators}.
-	 */
-	public CompositeReactiveHealthIndicator(HealthAggregator healthAggregator,
-			ReactiveHealthIndicatorRegistry registry) {
-		this.registry = registry;
+		Assert.notNull(healthAggregator, "HealthAggregator must not be null");
+		Assert.notNull(indicators, "Indicators must not be null");
+		this.indicators = new LinkedHashMap<>(indicators);
 		this.healthAggregator = healthAggregator;
-		this.timeoutCompose = (mono) -> (this.timeout != null) ? mono.timeout(
+		this.timeoutCompose = (mono) -> this.timeout != null ? mono.timeout(
 				Duration.ofMillis(this.timeout), Mono.just(this.timeoutHealth)) : mono;
 	}
 
@@ -91,15 +66,10 @@ public class CompositeReactiveHealthIndicator implements ReactiveHealthIndicator
 	 * @param name the name of the health indicator
 	 * @param indicator the health indicator to add
 	 * @return this instance
-	 * @throws IllegalStateException if an indicator with the given {@code name} is
-	 * already registered.
-	 * @deprecated since 2.1.0 in favor of
-	 * {@link ReactiveHealthIndicatorRegistry#register(String, ReactiveHealthIndicator)}
 	 */
-	@Deprecated
 	public CompositeReactiveHealthIndicator addHealthIndicator(String name,
 			ReactiveHealthIndicator indicator) {
-		this.registry.register(name, indicator);
+		this.indicators.put(name, indicator);
 		return this;
 	}
 
@@ -115,14 +85,14 @@ public class CompositeReactiveHealthIndicator implements ReactiveHealthIndicator
 	public CompositeReactiveHealthIndicator timeoutStrategy(long timeout,
 			Health timeoutHealth) {
 		this.timeout = timeout;
-		this.timeoutHealth = (timeoutHealth != null) ? timeoutHealth
-				: Health.unknown().build();
+		this.timeoutHealth = (timeoutHealth != null ? timeoutHealth
+				: Health.unknown().build());
 		return this;
 	}
 
 	@Override
 	public Mono<Health> health() {
-		return Flux.fromIterable(this.registry.getAll().entrySet())
+		return Flux.fromIterable(this.indicators.entrySet())
 				.flatMap((entry) -> Mono.zip(Mono.just(entry.getKey()),
 						entry.getValue().health().compose(this.timeoutCompose)))
 				.collectMap(Tuple2::getT1, Tuple2::getT2)

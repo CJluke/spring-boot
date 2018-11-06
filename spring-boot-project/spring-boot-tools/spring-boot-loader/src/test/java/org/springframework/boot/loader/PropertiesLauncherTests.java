@@ -32,7 +32,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockitoAnnotations;
 
 import org.springframework.boot.loader.archive.Archive;
 import org.springframework.boot.loader.archive.ExplodedArchive;
@@ -42,7 +44,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Tests for {@link PropertiesLauncher}.
@@ -56,6 +57,9 @@ public class PropertiesLauncherTests {
 	public OutputCapture output = new OutputCapture();
 
 	@Rule
+	public ExpectedException expected = ExpectedException.none();
+
+	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private ClassLoader contextClassLoader;
@@ -63,6 +67,7 @@ public class PropertiesLauncherTests {
 	@Before
 	public void setup() {
 		this.contextClassLoader = Thread.currentThread().getContextClassLoader();
+		MockitoAnnotations.initMocks(this);
 		System.setProperty("loader.home",
 				new File("src/test/resources").getAbsolutePath());
 	}
@@ -99,9 +104,10 @@ public class PropertiesLauncherTests {
 	@Test
 	public void testNonExistentHome() {
 		System.setProperty("loader.home", "src/test/resources/nonexistent");
-		assertThatIllegalStateException().isThrownBy(PropertiesLauncher::new)
-				.withMessageContaining("Invalid source folder")
-				.withCauseInstanceOf(IllegalArgumentException.class);
+		this.expected.expectMessage("Invalid source folder");
+		PropertiesLauncher launcher = new PropertiesLauncher();
+		assertThat(launcher.getHomeDirectory())
+				.isNotEqualTo(new File(System.getProperty("loader.home")));
 	}
 
 	@Test

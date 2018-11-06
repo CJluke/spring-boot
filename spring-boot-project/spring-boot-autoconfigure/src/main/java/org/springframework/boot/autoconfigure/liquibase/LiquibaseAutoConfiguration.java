@@ -16,6 +16,9 @@
 
 package org.springframework.boot.autoconfigure.liquibase;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
@@ -23,6 +26,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 import liquibase.change.DatabaseChange;
+import liquibase.exception.LiquibaseException;
 import liquibase.integration.spring.SpringLiquibase;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -35,7 +39,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.data.jpa.EntityManagerFactoryDependsOnPostProcessor;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.boot.autoconfigure.jdbc.JdbcOperationsDependsOnPostProcessor;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -44,10 +47,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.orm.jpa.AbstractEntityManagerFactoryBean;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.util.Assert;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Liquibase.
@@ -70,14 +73,14 @@ public class LiquibaseAutoConfiguration {
 
 	@Bean
 	public LiquibaseSchemaManagementProvider liquibaseDefaultDdlModeProvider(
-			ObjectProvider<SpringLiquibase> liquibases) {
-		return new LiquibaseSchemaManagementProvider(liquibases);
+			ObjectProvider<List<SpringLiquibase>> liquibases) {
+		return new LiquibaseSchemaManagementProvider(
+				liquibases.getIfAvailable(Collections::emptyList));
 	}
 
 	@Configuration
 	@ConditionalOnMissingBean(SpringLiquibase.class)
-	@EnableConfigurationProperties({ DataSourceProperties.class,
-			LiquibaseProperties.class })
+	@EnableConfigurationProperties(LiquibaseProperties.class)
 	@Import(LiquibaseJpaDependencyConfiguration.class)
 	public static class LiquibaseConfiguration {
 
@@ -120,18 +123,11 @@ public class LiquibaseAutoConfiguration {
 			liquibase.setChangeLog(this.properties.getChangeLog());
 			liquibase.setContexts(this.properties.getContexts());
 			liquibase.setDefaultSchema(this.properties.getDefaultSchema());
-			liquibase.setLiquibaseSchema(this.properties.getLiquibaseSchema());
-			liquibase.setLiquibaseTablespace(this.properties.getLiquibaseTablespace());
-			liquibase.setDatabaseChangeLogTable(
-					this.properties.getDatabaseChangeLogTable());
-			liquibase.setDatabaseChangeLogLockTable(
-					this.properties.getDatabaseChangeLogLockTable());
 			liquibase.setDropFirst(this.properties.isDropFirst());
 			liquibase.setShouldRun(this.properties.isEnabled());
 			liquibase.setLabels(this.properties.getLabels());
 			liquibase.setChangeLogParameters(this.properties.getParameters());
 			liquibase.setRollbackFile(this.properties.getRollbackFile());
-			liquibase.setTestRollbackOnUpdate(this.properties.isTestRollbackOnUpdate());
 			return liquibase;
 		}
 
@@ -171,14 +167,14 @@ public class LiquibaseAutoConfiguration {
 		private String getProperty(Supplier<String> property,
 				Supplier<String> defaultValue) {
 			String value = property.get();
-			return (value != null) ? value : defaultValue.get();
+			return value == null ? defaultValue.get() : value;
 		}
 
 	}
 
 	/**
-	 * Additional configuration to ensure that {@link EntityManagerFactory} beans depend
-	 * on the liquibase bean.
+	 * Additional configuration to ensure that {@link EntityManagerFactory} beans
+	 * depend-on the liquibase bean.
 	 */
 	@Configuration
 	@ConditionalOnClass(LocalContainerEntityManagerFactoryBean.class)
@@ -193,17 +189,23 @@ public class LiquibaseAutoConfiguration {
 	}
 
 	/**
-	 * Additional configuration to ensure that {@link JdbcOperations} beans depend on the
-	 * liquibase bean.
+	 * A custom {@link SpringLiquibase} extension that closes the underlying
+	 * {@link DataSource} once the database has been migrated.
 	 */
-	@Configuration
-	@ConditionalOnClass(JdbcOperations.class)
-	@ConditionalOnBean(JdbcOperations.class)
-	protected static class LiquibaseJdbcOperationsDependencyConfiguration
-			extends JdbcOperationsDependsOnPostProcessor {
+	private static final class DataSourceClosingSpringLiquibase extends SpringLiquibase {
 
-		public LiquibaseJdbcOperationsDependencyConfiguration() {
-			super("liquibase");
+		@Override
+		public void afterPropertiesSet() throws LiquibaseException {
+			super.afterPropertiesSet();
+			closeDataSource();
+		}
+
+		private void closeDataSource() {
+			Class<?> dataSourceClass = getDataSource().getClass();
+			Method closeMethod = ReflectionUtils.findMethod(dataSourceClass, "close");
+			if (closeMethod != null) {
+				ReflectionUtils.invokeMethod(closeMethod, getDataSource());
+			}
 		}
 
 	}

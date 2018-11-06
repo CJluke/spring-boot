@@ -17,7 +17,6 @@
 package org.springframework.boot.actuate.autoconfigure.cloudfoundry;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.springframework.boot.actuate.endpoint.EndpointFilter;
 import org.springframework.boot.actuate.endpoint.invoke.OperationInvokerAdvisor;
@@ -46,17 +45,17 @@ public class CloudFoundryWebEndpointDiscoverer extends WebEndpointDiscoverer {
 	 * @param applicationContext the source application context
 	 * @param parameterValueMapper the parameter value mapper
 	 * @param endpointMediaTypes the endpoint media types
-	 * @param endpointPathMappers the endpoint path mappers
+	 * @param endpointPathMapper the endpoint path mapper
 	 * @param invokerAdvisors invoker advisors to apply
 	 * @param filters filters to apply
 	 */
 	public CloudFoundryWebEndpointDiscoverer(ApplicationContext applicationContext,
 			ParameterValueMapper parameterValueMapper,
-			EndpointMediaTypes endpointMediaTypes, List<PathMapper> endpointPathMappers,
+			EndpointMediaTypes endpointMediaTypes, PathMapper endpointPathMapper,
 			Collection<OperationInvokerAdvisor> invokerAdvisors,
 			Collection<EndpointFilter<ExposableWebEndpoint>> filters) {
 		super(applicationContext, parameterValueMapper, endpointMediaTypes,
-				endpointPathMappers, invokerAdvisors, filters);
+				endpointPathMapper, invokerAdvisors, filters);
 	}
 
 	@Override
@@ -73,7 +72,7 @@ public class CloudFoundryWebEndpointDiscoverer extends WebEndpointDiscoverer {
 		AnnotationAttributes attributes = AnnotatedElementUtils
 				.getMergedAnnotationAttributes(extensionBean.getClass(),
 						EndpointWebExtension.class);
-		Class<?> endpoint = (attributes != null) ? attributes.getClass("endpoint") : null;
+		Class<?> endpoint = (attributes == null ? null : attributes.getClass("endpoint"));
 		return (endpoint != null && HealthEndpoint.class.isAssignableFrom(endpoint));
 	}
 

@@ -32,7 +32,6 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,13 +75,6 @@ public class Log4J2LoggingSystemTests extends AbstractLoggingSystemTests {
 	public void setup() {
 		this.loggingSystem.cleanUp();
 		this.logger = LogManager.getLogger(getClass());
-	}
-
-	@Override
-	@After
-	public void clear() {
-		super.clear();
-		this.loggingSystem.cleanUp();
 	}
 
 	@Test

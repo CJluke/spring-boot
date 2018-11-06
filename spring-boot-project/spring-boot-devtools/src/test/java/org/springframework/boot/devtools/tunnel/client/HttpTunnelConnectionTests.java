@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.concurrent.Executor;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -37,7 +38,6 @@ import org.springframework.boot.test.rule.OutputCapture;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -51,6 +51,9 @@ import static org.mockito.Mockito.verify;
  * @author Andy Wilkinson
  */
 public class HttpTunnelConnectionTests {
+
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 
 	@Rule
 	public OutputCapture outputCapture = new OutputCapture();
@@ -76,30 +79,30 @@ public class HttpTunnelConnectionTests {
 
 	@Test
 	public void urlMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new HttpTunnelConnection(null, this.requestFactory))
-				.withMessageContaining("URL must not be empty");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must not be empty");
+		new HttpTunnelConnection(null, this.requestFactory);
 	}
 
 	@Test
 	public void urlMustNotBeEmpty() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new HttpTunnelConnection("", this.requestFactory))
-				.withMessageContaining("URL must not be empty");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("URL must not be empty");
+		new HttpTunnelConnection("", this.requestFactory);
 	}
 
 	@Test
 	public void urlMustNotBeMalformed() {
-		assertThatIllegalArgumentException().isThrownBy(
-				() -> new HttpTunnelConnection("htttttp:///ttest", this.requestFactory))
-				.withMessageContaining("Malformed URL 'htttttp:///ttest'");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("Malformed URL 'htttttp:///ttest'");
+		new HttpTunnelConnection("htttttp:///ttest", this.requestFactory);
 	}
 
 	@Test
 	public void requestFactoryMustNotBeNull() {
-		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new HttpTunnelConnection(this.url, null))
-				.withMessageContaining("RequestFactory must not be null");
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("RequestFactory must not be null");
+		new HttpTunnelConnection(this.url, null);
 	}
 
 	@Test
@@ -158,7 +161,8 @@ public class HttpTunnelConnectionTests {
 
 	private TunnelChannel openTunnel(boolean singleThreaded) throws Exception {
 		HttpTunnelConnection connection = new HttpTunnelConnection(this.url,
-				this.requestFactory, singleThreaded ? new CurrentThreadExecutor() : null);
+				this.requestFactory,
+				(singleThreaded ? new CurrentThreadExecutor() : null));
 		return connection.open(this.incomingChannel, this.closeable);
 	}
 
